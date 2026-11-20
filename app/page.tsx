@@ -74,12 +74,17 @@ interface Stats {
 export default function Dashboard() {
   const [clips, setClips] = useState<ClipItem[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, posted: 0, declined: 0, avgVirality: "0.0" });
-  const [activeTab, setActiveTab] = useState<"pending" | "posted" | "declined" | "all">("all");
+  const [activeTab, setActiveTab] = useState<"pending" | "posted" | "declined" | "all">("pending");
   const [sortBy, setSortBy] = useState<"score" | "newest">("score"); // High score on top by default
-  const [viewMode, setViewMode] = useState<"grid" | "feed">("grid"); // Folder grid vs detailed feed
+  const [viewMode, setViewMode] = useState<"grid" | "feed">("feed"); // Detailed feed default
   const [loading, setLoading] = useState<boolean>(true);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
+
+  // Sequential Approval Queue
+  const [approvingClipIds, setApprovingClipIds] = useState<string[]>([]);
+  const approvalQueueRef = useRef<string[]>([]);
+  const isProcessingQueueRef = useRef<boolean>(false);
 
   // Multi-select and modal preview state
   const [selectedClipIds, setSelectedClipIds] = useState<string[]>([]);
@@ -350,45 +355,89 @@ export default function Dashboard() {
     setTimeout(() => setToast(null), 5500);
   };
 
-  const handleApprove = async (clipId: string) => {
-    const targetClip = clips.find(c => c.id === clipId);
-    setActionInProgress(clipId);
-    showToast("info", "Uploading video to public cloud vault & sending to Buffer...");
-    logAction(`🎯 [UserAction] Approved clip "${targetClip?.hook_title || clipId}". Initiating Buffer dispatch...`, "info", "UserAction");
+  const processApprovalQueue = async () => {
+    if (isProcessingQueueRef.current) return;
+    isProcessingQueueRef.current = true;
 
-    try {
-      const res = await fetch("/api/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clipId,
-          caption: editCaptions[clipId],
-          hashtags: editHashtags[clipId],
-          channelIds: selectedChannels[clipId]
-        })
-      });
+    while (approvalQueueRef.current.length > 0) {
+      const clipId = approvalQueueRef.current[0];
+      const targetClip = clips.find(c => c.id === clipId);
 
-      const resData = await res.json();
+      showToast("info", `🚀 Uploading & posting "${targetClip?.hook_title || clipId}" to Buffer...`);
+      logAction(`🎯 [Queue] Processing clip "${targetClip?.hook_title || clipId}". Initiating Buffer dispatch...`, "info", "UserAction");
 
-      if (res.ok && resData.success) {
-        setClips(prev => prev.map(c => c.id === clipId ? { ...c, status: "posted", video_url: resData.videoUrl } : c));
-        setStats(prev => ({ ...prev, pending: Math.max(0, prev.pending - 1), posted: prev.posted + 1 }));
-        if (activePreviewClip && activePreviewClip.id === clipId) {
-          setActivePreviewClip(prev => prev ? { ...prev, status: "posted", video_url: resData.videoUrl } : null);
+      try {
+        const res = await fetch("/api/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clipId,
+            caption: editCaptions[clipId],
+            hashtags: editHashtags[clipId],
+            channelIds: selectedChannels[clipId]
+          })
+        });
+
+        const resData = await res.json();
+
+        if (res.ok && resData.success) {
+          setClips(prev => prev.map(c => c.id === clipId ? { ...c, status: "posted", video_url: resData.videoUrl } : c));
+          setStats(prev => ({ ...prev, pending: Math.max(0, prev.pending - 1), posted: prev.posted + 1 }));
+          if (activePreviewClip && activePreviewClip.id === clipId) {
+            setActivePreviewClip(prev => prev ? { ...prev, status: "posted", video_url: resData.videoUrl } : null);
+          }
+          showToast("success", `🎉 Successfully posted "${targetClip?.hook_title || clipId}" to Buffer!`);
+          logAction(`✅ [Buffer Success] Published "${targetClip?.hook_title || clipId}" on TikTok, YouTube Shorts & Facebook Reels!`, "success", "Buffer");
+        } else {
+          const errMsg = resData.error || "Buffer rejected the post request.";
+          showToast("error", `❌ Buffer Error for "${targetClip?.hook_title || clipId}": ${errMsg}`);
+          logAction(`❌ [Buffer Error] Failed to publish post: ${errMsg}`, "error", "Buffer");
         }
-        showToast("success", "🎉 Successfully posted & scheduled on your Buffer channels!");
-        logAction(`✅ [Buffer Success] Scheduled clip "${targetClip?.hook_title || clipId}" on TikTok, YouTube Shorts & Facebook Reels!`, "success", "Buffer");
-      } else {
-        const errMsg = resData.error || "Buffer rejected the post request.";
-        showToast("error", `❌ Buffer Error: ${errMsg}`);
-        logAction(`❌ [Buffer Error] Failed to publish post: ${errMsg}`, "error", "Buffer");
+      } catch (err: any) {
+        showToast("error", `❌ Network Error: ${err.message}`);
+        logAction(`❌ [Network Error] Buffer API dispatch failed: ${err.message}`, "error", "Buffer");
       }
-    } catch (err: any) {
-      showToast("error", `❌ Network Error: ${err.message}`);
-      logAction(`❌ [Network Error] Buffer API dispatch failed: ${err.message}`, "error", "Buffer");
-    } finally {
-      setActionInProgress(null);
+
+      // Dequeue finished clip
+      approvalQueueRef.current = approvalQueueRef.current.filter(id => id !== clipId);
+      setApprovingClipIds([...approvalQueueRef.current]);
     }
+
+    isProcessingQueueRef.current = false;
+  };
+
+  const handleApprove = (clipId: string) => {
+    if (approvalQueueRef.current.includes(clipId)) {
+      showToast("info", "Clip is already in the approval queue!");
+      return;
+    }
+
+    approvalQueueRef.current.push(clipId);
+    setApprovingClipIds([...approvalQueueRef.current]);
+    const queuePos = approvalQueueRef.current.length;
+    if (queuePos > 1) {
+      showToast("info", `⏳ Added to approval queue (Position #${queuePos}). It will post right after the current one!`);
+    }
+    processApprovalQueue();
+  };
+
+  const handleApproveSelected = () => {
+    const pendingSelected = selectedClipIds.filter(id => {
+      const clip = clips.find(c => c.id === id);
+      return clip && clip.status === "pending" && !approvalQueueRef.current.includes(id);
+    });
+
+    if (pendingSelected.length === 0) {
+      showToast("info", "No pending clips selected to approve.");
+      return;
+    }
+
+    for (const id of pendingSelected) {
+      approvalQueueRef.current.push(id);
+    }
+    setApprovingClipIds([...approvalQueueRef.current]);
+    showToast("info", `🚀 Queued ${pendingSelected.length} clip(s) for sequential approval & posting!`);
+    processApprovalQueue();
   };
 
   const handleDecline = async (clipId: string) => {
@@ -715,11 +764,26 @@ export default function Dashboard() {
 
                       <button
                         type="button"
+                        disabled={approvingClipIds.includes(activePreviewClip.id)}
                         onClick={() => handleApprove(activePreviewClip.id)}
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-600/30 transition"
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-600/30 transition disabled:opacity-60"
                       >
-                        <Send className="w-4 h-4" />
-                        Approve & Post
+                        {approvingClipIds[0] === activePreviewClip.id ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin text-purple-200" />
+                            Posting to Buffer...
+                          </>
+                        ) : approvingClipIds.includes(activePreviewClip.id) ? (
+                          <>
+                            <Clock className="w-4 h-4 animate-pulse text-amber-300" />
+                            In Queue (#{approvingClipIds.indexOf(activePreviewClip.id) + 1})
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4" />
+                            Approve & Post
+                          </>
+                        )}
                       </button>
                     </>
                   ) : activePreviewClip.status === "posted" ? (
@@ -976,18 +1040,6 @@ export default function Dashboard() {
               {/* Tabs */}
               <div className="flex items-center gap-2 flex-wrap">
                 <button
-                  onClick={() => setActiveTab("all")}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                    activeTab === "all"
-                      ? "bg-purple-600/20 text-purple-300 border border-purple-500/40 shadow-md shadow-purple-600/10"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                  }`}
-                >
-                  <Folder className="w-3.5 h-3.5" />
-                  All Clips ({stats.total})
-                </button>
-
-                <button
                   onClick={() => setActiveTab("pending")}
                   className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
                     activeTab === "pending"
@@ -1026,6 +1078,18 @@ export default function Dashboard() {
                   }`}
                 >
                   Declined ({stats.declined})
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("all")}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                    activeTab === "all"
+                      ? "bg-purple-600/20 text-purple-300 border border-purple-500/40 shadow-md shadow-purple-600/10"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                  }`}
+                >
+                  <Folder className="w-3.5 h-3.5" />
+                  All Clips ({stats.total})
                 </button>
               </div>
 
@@ -1111,15 +1175,28 @@ export default function Dashboard() {
 
                 <div className="flex items-center gap-2.5">
                   {selectedClipIds.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleDeleteSelected}
-                      disabled={actionInProgress === "delete-batch"}
-                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-red-300 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 transition disabled:opacity-50"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete Selected ({selectedClipIds.length})
-                    </button>
+                    <>
+                      {selectedClipIds.filter(id => clips.find(c => c.id === id)?.status === "pending").length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleApproveSelected}
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-md shadow-purple-600/20 transition"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          Approve Selected ({selectedClipIds.filter(id => clips.find(c => c.id === id)?.status === "pending").length})
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleDeleteSelected}
+                        disabled={actionInProgress === "delete-batch"}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-red-300 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 transition disabled:opacity-50"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete Selected ({selectedClipIds.length})
+                      </button>
+                    </>
                   )}
 
                   {/* Clear All Clips Button */}
@@ -1501,16 +1578,26 @@ export default function Dashboard() {
 
                                   <button
                                     type="button"
-                                    disabled={actionInProgress === clip.id}
+                                    disabled={approvingClipIds.includes(clip.id)}
                                     onClick={() => handleApprove(clip.id)}
-                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-600/30 transition disabled:opacity-50 disabled:shadow-none"
+                                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-600/30 transition disabled:opacity-75 disabled:shadow-none"
                                   >
-                                    {actionInProgress === clip.id ? (
-                                      <RefreshCw className="w-4 h-4 animate-spin" />
+                                    {approvingClipIds[0] === clip.id ? (
+                                      <>
+                                        <RefreshCw className="w-4 h-4 animate-spin text-purple-200" />
+                                        Posting to Buffer...
+                                      </>
+                                    ) : approvingClipIds.includes(clip.id) ? (
+                                      <>
+                                        <Clock className="w-4 h-4 animate-pulse text-amber-300" />
+                                        In Queue (#{approvingClipIds.indexOf(clip.id) + 1})
+                                      </>
                                     ) : (
-                                      <Send className="w-4 h-4" />
+                                      <>
+                                        <Send className="w-4 h-4" />
+                                        Approve & Post to Buffer
+                                      </>
                                     )}
-                                    Approve & Post to Buffer
                                   </button>
                                 </>
                               )}
