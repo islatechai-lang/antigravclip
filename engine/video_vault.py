@@ -17,6 +17,8 @@ def upload_clip_to_vault(video_path: str) -> Optional[str]:
         return None
 
     filename = os.path.basename(video_path)
+    if not filename.endswith(".mp4"):
+        filename = f"{filename}.mp4"
     expected_url = f"https://github.com/{repo}/releases/download/{tag}/{filename}"
 
     headers = {

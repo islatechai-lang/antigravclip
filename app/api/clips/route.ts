@@ -48,8 +48,9 @@ export async function GET() {
 
     // Ensure every clip has a valid public video_url for cloud playback & Buffer
     clips = clips.map((c: any) => {
-      if (!c.video_url || c.video_url.startsWith("output") || c.video_url.includes("\\")) {
-        c.video_url = `https://github.com/islatechai-lang/antigravclip/releases/download/v1-clips/${c.file}`;
+      if (!c.video_url || c.video_url.startsWith("output") || c.video_url.includes("\\") || !c.video_url.endsWith(".mp4")) {
+        const file = (c.file && c.file.endsWith(".mp4")) ? c.file : `${c.id}.mp4`;
+        c.video_url = `https://github.com/islatechai-lang/antigravclip/releases/download/v1-clips/${file}`;
       }
       return c;
     });

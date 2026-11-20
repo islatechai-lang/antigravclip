@@ -33,7 +33,26 @@ export async function POST(req: Request) {
     }
 
     // 1. Get or upload video to public vault so Buffer can download it
-    const videoUrl = await getOrUploadVideoToVault(clipId);
+    let videoUrl: string | null = null;
+    try {
+      const { data: cData } = await supabase
+        .from("clips")
+        .select("video_url")
+        .eq("id", clipId)
+        .maybeSingle();
+      if (cData?.video_url && cData.video_url.endsWith(".mp4")) {
+        videoUrl = cData.video_url;
+      }
+    } catch {}
+
+    if (!videoUrl) {
+      videoUrl = await getOrUploadVideoToVault(clipId);
+    }
+
+    if (videoUrl && !videoUrl.endsWith(".mp4")) {
+      videoUrl = `${videoUrl}.mp4`;
+    }
+
     console.log(`[API /approve] Using public video URL for ${clipId}: ${videoUrl}`);
 
     const selectedChannels = channelIds && channelIds.length > 0

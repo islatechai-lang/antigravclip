@@ -6,14 +6,10 @@ export async function getOrUploadVideoToVault(clipId: string): Promise<string | 
   const repo = process.env.GITHUB_REPO || "islatechai-lang/antigravclip";
   const tag = "v1-clips";
 
-  // Check local video file
-  const outputDir = path.join(process.cwd(), "output");
-  let videoPath = path.join(outputDir, `${clipId}.mp4`);
-  if (!fs.existsSync(videoPath)) {
-    videoPath = path.join(outputDir, clipId);
-  }
-
-  const filename = path.basename(videoPath);
+  // Ensure clean filename ending with .mp4
+  const cleanId = clipId.replace(/\.mp4$/i, "");
+  const filename = `${cleanId}.mp4`;
+  const videoPath = path.join(process.cwd(), "output", filename);
   const expectedDirectUrl = `https://github.com/${repo}/releases/download/${tag}/${filename}`;
 
   // Check if asset already exists in release
