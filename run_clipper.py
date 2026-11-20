@@ -169,17 +169,21 @@ class ClipperOrchestrator:
                 if not self._running:
                     break
 
+                # If buffer is actively flowing and healthy, no need to probe streamlink
+                if self.stream_buffer._running and self.stream_buffer.is_healthy():
+                    consecutive_offline_checks = 0
+                    continue
+
+                # Buffer is stopped or stalled, check live status to reconnect
                 is_live = self.stream_buffer.is_stream_live()
                 if is_live:
-                    healthy = self.stream_buffer.ensure_healthy()
-                    if not healthy:
-                        print(f"🔄 [StreamBuffer] Re-attaching live stream recording buffer...")
-                        self.stream_buffer.start_recording()
+                    print(f"🔄 [StreamBuffer] Live broadcast active! Re-attaching recording buffer...")
+                    self.stream_buffer.start_recording()
                     consecutive_offline_checks = 0
                 else:
                     consecutive_offline_checks += 1
-                    # Log periodically so user knows standby is active
-                    if consecutive_offline_checks % 4 == 1:
+                    # Only log standby after 2 consecutive failed probes (~30s)
+                    if consecutive_offline_checks >= 2 and consecutive_offline_checks % 4 == 2:
                         print(f"⏳ [StreamBuffer] Standby: @{self.channel} is offline on {self.platform.upper()}. Waiting for live broadcast...")
         except KeyboardInterrupt:
             print("\nShutting down clipper engine...")

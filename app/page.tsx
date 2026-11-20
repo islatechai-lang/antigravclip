@@ -862,7 +862,7 @@ export default function Dashboard() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        handleStartWorker();
+                        handleStartWorker(streamerHandle, streamerPlatform);
                       }
                     }}
                     placeholder="Enter streamer handle (e.g. tarik, kaicenat, ishowspeed, jynxzi)..."
@@ -1136,17 +1136,44 @@ export default function Dashboard() {
               </div>
             ) : sortedClips.length === 0 ? (
               <div className="text-center py-20 bg-[#0f1422] border border-slate-800 rounded-3xl p-12">
-                <div className="text-5xl mb-4">🎬</div>
-                <h3 className="text-xl font-bold text-white mb-2">No clips right now</h3>
-                <p className="text-sm text-slate-400 max-w-md mx-auto mb-6">
-                  Clean slate! Paste any Twitch or YouTube streamer handle above and click &quot;Start Autonomous Clipper&quot; to begin capturing fresh clips.
-                </p>
-                <button
-                  onClick={() => handleStartWorker()}
-                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-600/30 transition"
-                >
-                  Start Clipper for @{streamerHandle}
-                </button>
+                {workerStatus.is_running ? (
+                  <>
+                    <div className="relative inline-block mb-4">
+                      <div className="w-16 h-16 rounded-2xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-3xl mx-auto">
+                        <Radio className="w-8 h-8 text-emerald-400 animate-pulse" />
+                      </div>
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-black text-white mb-2">
+                      Live Autonomous Clipper is Active!
+                    </h3>
+                    <p className="text-sm text-slate-400 max-w-lg mx-auto mb-6 leading-relaxed">
+                      Actively monitoring <span className="text-purple-400 font-bold">@{workerStatus.channel}</span> ({workerStatus.platform?.toUpperCase()}). 
+                      The AI Director is listening for chat velocity spikes, transcribing gameplay, and composing 9:16 vertical clips. Newly generated clips will appear right here automatically!
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      Continuous buffer recording active • Watch real-time events in the Live Console →
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-5xl mb-4">🎬</div>
+                    <h3 className="text-xl font-bold text-white mb-2">No clips right now</h3>
+                    <p className="text-sm text-slate-400 max-w-md mx-auto mb-6">
+                      Clean slate! Paste any Twitch or YouTube streamer handle above and click &quot;Start Autonomous Clipper&quot; to begin capturing fresh clips.
+                    </p>
+                    <button
+                      onClick={() => handleStartWorker(streamerHandle, streamerPlatform)}
+                      className="px-6 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-600/30 transition"
+                    >
+                      Start Clipper for @{streamerHandle}
+                    </button>
+                  </>
+                )}
               </div>
             ) : viewMode === "grid" ? (
               /* WINDOWS FOLDER STYLE MEDIA GRID */

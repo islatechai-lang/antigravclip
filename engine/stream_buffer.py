@@ -48,8 +48,8 @@ class StreamBuffer:
         """Probes streamlink to determine if the broadcast is currently live."""
         channel_url = self.get_channel_url()
         try:
-            cmd = ["streamlink", "--stream-url", channel_url]
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
+            cmd = ["streamlink", "--stream-timeout", "15", "--stream-url", channel_url]
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
             return res.returncode == 0 and res.stdout.strip().startswith("http")
         except Exception:
             return False

@@ -158,28 +158,56 @@ class VisionQA:
         banner[:] = banner_color
         combined = np.vstack([banner, strip])
 
-        im = Image.fromarray(cv2.cvtColor(combined, cv2.COLOR_BGR2RGB))
-        draw = ImageDraw.Draw(im)
+        try:
+            im = Image.fromarray(cv2.cvtColor(combined, cv2.COLOR_BGR2RGB))
+            draw = ImageDraw.Draw(im)
 
-        font_title = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 22)
-        font_sub = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 17)
-        font_stamp = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 16)
+            def _get_font(size: int):
+                possible_fonts = [
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                    "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+                    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+                    "C:/Windows/Fonts/arialbd.ttf",
+                    "C:/Windows/Fonts/arial.ttf",
+                ]
+                for p in possible_fonts:
+                    if os.path.exists(p):
+                        try:
+                            return ImageFont.truetype(p, size)
+                        except Exception:
+                            pass
+                try:
+                    return ImageFont.load_default()
+                except Exception:
+                    return None
 
-        status_text = f"VISION QA: {verdict} (Comprehension Score: {score:.1f}/10)"
-        draw.text((20, 14), status_text, font=font_title, fill=(255, 255, 255))
+            font_title = _get_font(22)
+            font_sub = _get_font(17)
+            font_stamp = _get_font(16)
 
-        clean_premise = premise_hook if len(premise_hook) < 65 else premise_hook[:62] + "..."
-        draw.text((20, 48), f"Premise: {clean_premise}", font=font_sub, fill=(255, 215, 0))
+            status_text = f"VISION QA: {verdict} (Comprehension Score: {score:.1f}/10)"
+            draw.text((20, 14), status_text, font=font_title, fill=(255, 255, 255))
 
-        labels = ["Setup", "Escalation", "Climax", "Payoff"]
-        for idx, (t, _) in enumerate(frames):
-            lbl = labels[idx] if idx < len(labels) else "Moment"
-            tag = f"{t:.1f}s ({lbl})"
-            draw.text((idx * 270 + 15, banner_h + 15), tag, font=font_stamp, fill=(255, 255, 255))
+            clean_premise = premise_hook if len(premise_hook) < 65 else premise_hook[:62] + "..."
+            draw.text((20, 48), f"Premise: {clean_premise}", font=font_sub, fill=(255, 215, 0))
 
-        output_path = self.storyboards_dir / f"storyboard_{clip_name}.jpg"
-        im.save(str(output_path), quality=92)
-        return str(output_path)
+            labels = ["Setup", "Escalation", "Climax", "Payoff"]
+            for idx, (t, _) in enumerate(frames):
+                lbl = labels[idx] if idx < len(labels) else "Moment"
+                tag = f"{t:.1f}s ({lbl})"
+                draw.text((idx * 270 + 15, banner_h + 15), tag, font=font_stamp, fill=(255, 255, 255))
+
+            output_path = self.storyboards_dir / f"storyboard_{clip_name}.jpg"
+            im.save(str(output_path), quality=92)
+            return str(output_path)
+        except Exception as e:
+            print(f"[VisionQA] Warning generating storyboard: {e}")
+            output_path = self.storyboards_dir / f"storyboard_{clip_name}.jpg"
+            try:
+                cv2.imwrite(str(output_path), combined)
+                return str(output_path)
+            except Exception:
+                return ""
 
     def verify_clip(
         self,
