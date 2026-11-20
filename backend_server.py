@@ -339,6 +339,16 @@ def _supabase_bridge_loop():
                         except Exception:
                             pass
 
+            # Check if user requested logs clear from Vercel
+            try:
+                r_log_check = session.get(f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_logs", headers=headers, timeout=5)
+                if r_log_check.ok and r_log_check.json():
+                    log_row = r_log_check.json()[0]
+                    if log_row.get("status") == "cleared":
+                        log_manager.clear()
+            except Exception:
+                pass
+
             # Sync latest logs to Supabase every 2.5 seconds for Vercel Live Console
             now = time.time()
             if now - last_log_sync >= 2.5:

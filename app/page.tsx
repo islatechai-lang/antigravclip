@@ -103,15 +103,15 @@ export default function Dashboard() {
     uptime_seconds?: number;
   }>({
     is_running: false,
-    channel: "tarik",
+    channel: "ishowspeed",
     platform: "twitch"
   });
-  const [streamerHandle, setStreamerHandle] = useState<string>("tarik");
+  const [streamerHandle, setStreamerHandle] = useState<string>("ishowspeed");
   const [streamerPlatform, setStreamerPlatform] = useState<"twitch" | "youtube">("twitch");
   const [workerLoading, setWorkerLoading] = useState<boolean>(false);
 
   const popularPresets = [
-    { name: "IShowSpeed", channel: "ishowspeed", platform: "youtube" as const, icon: "🔴" },
+    { name: "IShowSpeed", channel: "ishowspeed", platform: "twitch" as const, icon: "🟣" },
     { name: "Tarik", channel: "tarik", platform: "twitch" as const, icon: "🟣" },
     { name: "Kai Cenat", channel: "kaicenat", platform: "twitch" as const, icon: "🟣" },
     { name: "Jynxzi", channel: "jynxzi", platform: "twitch" as const, icon: "🟣" },
@@ -303,7 +303,7 @@ export default function Dashboard() {
       fetchClips();
       fetchWorkerStatus();
       fetchLogs();
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, []);
@@ -748,13 +748,10 @@ export default function Dashboard() {
               <span className={`w-2 h-2 rounded-full ${workerStatus.is_running ? "bg-emerald-400 animate-ping" : "bg-purple-400"}`} />
             </button>
 
-            <button
-              onClick={fetchClips}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700/80 transition shadow-sm"
-            >
-              <RefreshCw className="w-3.5 h-3.5 text-purple-400" />
-              Refresh
-            </button>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>LIVE SYNC</span>
+            </div>
             <a
               href="https://publish.buffer.com"
               target="_blank"
@@ -811,11 +808,10 @@ export default function Dashboard() {
                       onClick={() => {
                         setStreamerHandle(preset.channel);
                         setStreamerPlatform(preset.platform);
-                        handleStartWorker(preset.channel, preset.platform);
                       }}
                       className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition flex items-center gap-1.5 ${
-                        workerStatus.channel.toLowerCase() === preset.channel.toLowerCase() && workerStatus.is_running
-                          ? "bg-purple-600/30 border-purple-500 text-purple-200"
+                        streamerHandle.toLowerCase() === preset.channel.toLowerCase() && streamerPlatform === preset.platform
+                          ? "bg-purple-600/30 border-purple-500 text-purple-200 shadow-sm"
                           : "bg-[#090d16] border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
                       }`}
                     >

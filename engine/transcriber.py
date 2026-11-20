@@ -76,10 +76,10 @@ class Transcriber:
                 print(f"[Transcriber] Loading faster-whisper ({self.model_size}) on {dev}...")
                 self._model = WhisperModel(self.model_size, device=dev, compute_type=self.compute_type)
             except Exception as e:
-                print(f"[Transcriber] Could not load {self.model_size}: {e}. Trying tiny.en...")
+                print(f"[Transcriber] Could not load {self.model_size}: {e}. Trying base.en...")
                 try:
                     from faster_whisper import WhisperModel
-                    self._model = WhisperModel("tiny.en", device="cpu", compute_type="int8")
+                    self._model = WhisperModel("base.en", device="cpu", compute_type="int8")
                 except Exception:
                     self._model = "fallback"
 
@@ -127,17 +127,42 @@ class Transcriber:
         full_text_parts = []
 
         try:
-            # Enable Silero VAD to strip game noise, car engines, and silence
+            # Enable Silero VAD + anti-hallucination controls to strip game noise, car engines, and repetition
             segments, _ = self._model.transcribe(
                 str(wav_path),
                 word_timestamps=True,
                 vad_filter=True,
                 vad_parameters=dict(min_silence_duration_ms=400, speech_pad_ms=200),
                 beam_size=5,
-                temperature=0.0
+                temperature=0.0,
+                condition_on_previous_text=False,  # CRITICAL: stops hallucination feedback loops
+                repetition_penalty=1.2,           # Penalize repetitive phrases
+                no_repeat_ngram_size=3,            # Disallow identical 3-word loops
+                no_speech_threshold=0.5,           # Filter out ambient game audio
+                compression_ratio_threshold=2.2,   # Drop repetitive degenerate sequences
+                initial_prompt="Live gaming stream commentary, English reactions, jokes, high energy."
             )
 
+            hallucination_blacklist = [
+                "i'm full of you", "im full of you", "thank you for watching",
+                "thanks for watching", "please subscribe", "subtitles by",
+                "subscribe to my channel", "amara.org"
+            ]
+
+            last_seg_text = ""
             for seg in segments:
+                raw_text = seg.text.strip()
+                clean_lower = raw_text.lower().strip(" .!?,")
+
+                # Filter known Whisper silence hallucinations
+                if any(bad in clean_lower for bad in hallucination_blacklist):
+                    continue
+
+                # Filter duplicate consecutive segments
+                if clean_lower == last_seg_text:
+                    continue
+                last_seg_text = clean_lower
+
                 words = []
                 if hasattr(seg, "words") and seg.words:
                     for w in seg.words:
@@ -148,7 +173,7 @@ class Transcriber:
                             w_end = max(w_start + 0.1, float(w.end))
                             words.append(WordTimestamp(word=w_text, start=w_start, end=w_end, probability=w.probability))
                 else:
-                    words_split = seg.text.strip().split()
+                    words_split = raw_text.split()
                     duration = max(0.1, seg.end - seg.start)
                     step = duration / max(1, len(words_split))
                     for i, w in enumerate(words_split):
@@ -157,8 +182,8 @@ class Transcriber:
                         words.append(WordTimestamp(word=w, start=w_start, end=w_end, probability=0.9))
 
                 if words:
-                    segments_out.append(TranscriptSegment(text=seg.text.strip(), start=seg.start, end=seg.end, words=words))
-                    full_text_parts.append(seg.text.strip())
+                    segments_out.append(TranscriptSegment(text=raw_text, start=seg.start, end=seg.end, words=words))
+                    full_text_parts.append(raw_text)
 
         except Exception as e:
             print(f"[Transcriber] Transcription runtime error: {e}")

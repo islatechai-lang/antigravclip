@@ -64,7 +64,7 @@ class ClipperOrchestrator:
         self.slice_pre_spike = s_buf.get("slice_pre_spike_sec", 50)
         self.slice_post_spike = s_buf.get("slice_post_spike_sec", 25)
 
-        self.transcriber = Transcriber(model_size="tiny", device="cpu", compute_type="int8")
+        self.transcriber = Transcriber(model_size="base.en", device="cpu", compute_type="int8")
 
         ai_cfg = config.get("ai_director", {})
         self.ai_director = AIDirector(

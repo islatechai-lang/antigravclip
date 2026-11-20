@@ -1,6 +1,6 @@
 # Autonomous AI Stream Clipper Configuration
 target:
-  platform: "youtube"
+  platform: "twitch"
   channel: "ishowspeed"
 
 chat_monitor:

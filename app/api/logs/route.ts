@@ -61,5 +61,21 @@ export async function DELETE() {
       // ignore
     }
   }
+
+  // Clear Supabase Cloud Bridge logs as well
+  try {
+    await supabase
+      .from("clips")
+      .upsert({
+        id: "sys_worker_logs",
+        file: "logs.json",
+        what_happens: JSON.stringify([]),
+        status: "cleared",
+        caption: new Date().toISOString()
+      });
+  } catch (err) {
+    console.warn("Error clearing Supabase logs:", err);
+  }
+
   return NextResponse.json({ status: "cleared" });
 }
