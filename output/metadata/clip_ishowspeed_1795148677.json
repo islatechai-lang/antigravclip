@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795148677.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed's epic game commitment\ud83d\udd25\ud83d\ude02",
+  "caption": "When you know you gotta stay in the game! #IShowSpeed #GamingMoments #Viral",
+  "virality_score": 8.5,
+  "reasoning": "IShowSpeed shows high energy with repeated phrases and clear reactions, engaging with chat and expressing emotions, making it a prime candidate for virality.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 12:25:13",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed's epic game commitment\ud83d\udd25\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795148620.jpg"
+  }
+}

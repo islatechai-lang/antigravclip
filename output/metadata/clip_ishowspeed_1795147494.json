@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795147494.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed can't believe this guy!\ud83d\ude31\ud83d\ude02",
+  "caption": "When you meet the wrong trainer! #IShowSpeed #FunnyMoments #TwitchHighlights #Viral",
+  "virality_score": 8.5,
+  "reasoning": "High energy reaction with disbelief and humor, engaging with the chat. Perfectly captures Speed's personality and interaction with the audience.",
+  "duration_seconds": 37.45,
+  "created_at": "2026-11-20 12:06:05",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed can't believe this guy!\ud83d\ude31\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795147441.jpg"
+  }
+}
