@@ -7,8 +7,12 @@ hashtags, and social post records. Keeps data/clips.json updated for the dashboa
 import os
 import json
 import glob
+import requests
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class ClipStore:
@@ -95,7 +99,64 @@ class ClipStore:
         # Sort descending by creation time / id
         clip_list = sorted(existing.values(), key=lambda x: str(x.get("id")), reverse=True)
         self._save_db(clip_list)
+
+        # Sync any newly discovered clips to Supabase cloud
+        for c in clip_list:
+            if not c.get("synced_to_supabase"):
+                synced = self._sync_to_supabase(c)
+                if synced:
+                    c["synced_to_supabase"] = True
+        self._save_db(clip_list)
+
         return clip_list
+
+    def _sync_to_supabase(self, clip: Dict[str, Any]) -> bool:
+        """Pushes a local clip directly into the Supabase Cloud database so Vercel dashboard sees it immediately."""
+        supabase_url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+        supabase_key = os.environ.get("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
+        if not supabase_url or not supabase_key:
+            return False
+
+        headers = {
+            "apikey": supabase_key,
+            "Authorization": f"Bearer {supabase_key}",
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates"
+        }
+
+        # Upload to video vault if missing
+        video_path = clip.get("video_path")
+        if video_path and os.path.exists(video_path) and not clip.get("video_url"):
+            try:
+                from .video_vault import upload_clip_to_vault
+                clip["video_url"] = upload_clip_to_vault(video_path)
+            except Exception as e:
+                print(f"[ClipStore] Video upload warning: {e}")
+
+        payload = {
+            "id": clip["id"],
+            "file": clip.get("file", f"{clip['id']}.mp4"),
+            "channel": clip.get("channel", "streamer"),
+            "hook_title": clip.get("hook_title", "Viral Clip"),
+            "caption": clip.get("caption", ""),
+            "hashtags": clip.get("hashtags", []),
+            "virality_score": float(clip.get("virality_score", 7.0)),
+            "reasoning": clip.get("reasoning", ""),
+            "duration_seconds": float(clip.get("duration_seconds", 30.0)),
+            "what_happens": clip.get("what_happens", ""),
+            "status": clip.get("status", "pending"),
+            "video_url": clip.get("video_url"),
+            "storyboard_path": clip.get("storyboard_path")
+        }
+
+        try:
+            r = requests.post(f"{supabase_url}/rest/v1/clips", headers=headers, json=payload, timeout=15)
+            if r.status_code in [200, 201]:
+                print(f"[ClipStore] ☁️ Clip '{clip['id']}' synchronized to Supabase Cloud!")
+                return True
+        except Exception as e:
+            print(f"[ClipStore] Supabase sync warning: {e}")
+        return False
 
     def get_all(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
         self.sync_from_metadata()
