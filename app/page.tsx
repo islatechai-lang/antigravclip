@@ -11,16 +11,22 @@ import {
   Clock, 
   Tv, 
   Tag, 
-  RefreshCw,
-  Send,
-  Eye,
-  Sparkles,
-  ExternalLink,
-  SlidersHorizontal,
+  RefreshCw, 
+  Send, 
+  Eye, 
+  Sparkles, 
+  ExternalLink, 
+  SlidersHorizontal, 
   AlertCircle,
   Radio,
   Zap,
-  Square
+  Square,
+  CheckSquare,
+  Trash2,
+  Grid,
+  List,
+  Folder,
+  X
 } from "lucide-react";
 
 interface ClipItem {
@@ -52,11 +58,17 @@ interface Stats {
 export default function Dashboard() {
   const [clips, setClips] = useState<ClipItem[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, posted: 0, declined: 0, avgVirality: "0.0" });
-  const [activeTab, setActiveTab] = useState<"pending" | "posted" | "declined" | "all">("pending");
+  const [activeTab, setActiveTab] = useState<"pending" | "posted" | "declined" | "all">("all");
   const [sortBy, setSortBy] = useState<"score" | "newest">("score"); // High score on top by default
+  const [viewMode, setViewMode] = useState<"grid" | "feed">("grid"); // Folder grid vs detailed feed
   const [loading, setLoading] = useState<boolean>(true);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
+
+  // Multi-select and modal preview state
+  const [selectedClipIds, setSelectedClipIds] = useState<string[]>([]);
+  const [activePreviewClip, setActivePreviewClip] = useState<ClipItem | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState<boolean>(false);
 
   // Cloud Worker Controller State
   const [workerStatus, setWorkerStatus] = useState<{
@@ -65,7 +77,7 @@ export default function Dashboard() {
     platform: string;
     uptime_seconds?: number;
   }>({
-    is_running: true,
+    is_running: false,
     channel: "ishowspeed",
     platform: "youtube"
   });
@@ -80,7 +92,6 @@ export default function Dashboard() {
     { name: "Jynxzi", channel: "jynxzi", platform: "twitch" as const, icon: "🟣" },
     { name: "xQc", channel: "xqc", platform: "twitch" as const, icon: "🟣" },
   ];
-
 
   // Per-clip editing state
   const [editCaptions, setEditCaptions] = useState<Record<string, string>>({});
@@ -108,7 +119,7 @@ export default function Dashboard() {
 
         (data.clips || []).forEach((c: ClipItem) => {
           initialCaptions[c.id] = c.caption;
-          initialTags[c.id] = c.hashtags || ["#gta6", "#ishowspeed", "#gaming", "#shorts", "#viral", "#fyp"];
+          initialTags[c.id] = c.hashtags || ["#gta6", "#gaming", "#shorts", "#viral", "#fyp"];
           initialChans[c.id] = availableChannels.map(ch => ch.id);
         });
 
@@ -239,6 +250,9 @@ export default function Dashboard() {
         // Update local state
         setClips(prev => prev.map(c => c.id === clipId ? { ...c, status: "posted", video_url: resData.videoUrl } : c));
         setStats(prev => ({ ...prev, pending: Math.max(0, prev.pending - 1), posted: prev.posted + 1 }));
+        if (activePreviewClip && activePreviewClip.id === clipId) {
+          setActivePreviewClip(prev => prev ? { ...prev, status: "posted", video_url: resData.videoUrl } : null);
+        }
         showToast("success", "🎉 Successfully posted & scheduled on your Buffer channels!");
       } else {
         const errMsg = resData.error || "Buffer rejected the post request.";
@@ -263,12 +277,124 @@ export default function Dashboard() {
       if (res.ok) {
         setClips(prev => prev.map(c => c.id === clipId ? { ...c, status: "declined" } : c));
         setStats(prev => ({ ...prev, pending: Math.max(0, prev.pending - 1), declined: prev.declined + 1 }));
+        if (activePreviewClip && activePreviewClip.id === clipId) {
+          setActivePreviewClip(prev => prev ? { ...prev, status: "declined" } : null);
+        }
         showToast("info", "Clip declined and archived.");
       }
     } catch (err) {
       showToast("error", "Failed to decline clip.");
     } finally {
       setActionInProgress(null);
+    }
+  };
+
+  // Delete handlers
+  const handleDeleteSingle = async (clipId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setActionInProgress(clipId);
+
+    try {
+      const res = await fetch("/api/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clipId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setClips(prev => prev.filter(c => c.id !== clipId));
+        setSelectedClipIds(prev => prev.filter(id => id !== clipId));
+        if (activePreviewClip?.id === clipId) setActivePreviewClip(null);
+        showToast("info", "🗑️ Clip deleted.");
+      } else {
+        showToast("error", `Failed to delete: ${data.error || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      showToast("error", `Delete error: ${err.message}`);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedClipIds.length === 0) return;
+    setActionInProgress("delete-batch");
+    showToast("info", `Deleting ${selectedClipIds.length} clip(s)...`);
+
+    try {
+      const res = await fetch("/api/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clipIds: selectedClipIds })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setClips(prev => prev.filter(c => !selectedClipIds.includes(c.id)));
+        setStats(prev => {
+          const remaining = clips.filter(c => !selectedClipIds.includes(c.id));
+          return {
+            total: remaining.length,
+            pending: remaining.filter(c => c.status === "pending").length,
+            posted: remaining.filter(c => c.status === "posted" || c.status === "approved").length,
+            declined: remaining.filter(c => c.status === "declined").length,
+            avgVirality: remaining.length ? (remaining.reduce((a, b) => a + (b.virality_score || 0), 0) / remaining.length).toFixed(1) : "0.0"
+          };
+        });
+        setSelectedClipIds([]);
+        if (activePreviewClip && selectedClipIds.includes(activePreviewClip.id)) {
+          setActivePreviewClip(null);
+        }
+        showToast("success", `🗑️ Successfully deleted ${data.deletedCount || selectedClipIds.length} clip(s)!`);
+      } else {
+        showToast("error", `Failed to delete: ${data.error || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      showToast("error", `Delete network error: ${err.message}`);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    setActionInProgress("delete-all");
+    showToast("info", "Clearing all clips and resetting database...");
+
+    try {
+      const res = await fetch("/api/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setClips([]);
+        setSelectedClipIds([]);
+        setActivePreviewClip(null);
+        setStats({ total: 0, pending: 0, posted: 0, declined: 0, avgVirality: "0.0" });
+        setConfirmDeleteAll(false);
+        showToast("success", "✨ All clips deleted. Clean slate ready!");
+      } else {
+        showToast("error", `Failed to delete all: ${data.error || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      showToast("error", `Delete error: ${err.message}`);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const toggleSelectClip = (clipId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedClipIds(prev => 
+      prev.includes(clipId) ? prev.filter(id => id !== clipId) : [...prev, clipId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedClipIds.length === sortedClips.length && sortedClips.length > 0) {
+      setSelectedClipIds([]);
+    } else {
+      setSelectedClipIds(sortedClips.map(c => c.id));
     }
   };
 
@@ -336,6 +462,145 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Fullscreen Video Preview Modal */}
+      {activePreviewClip && (
+        <div 
+          onClick={() => setActivePreviewClip(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#0f1422] border border-slate-800 rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl shadow-black/80 flex flex-col md:flex-row max-h-[90vh]"
+          >
+            {/* Left: 9:16 Video Player */}
+            <div className="md:w-[340px] bg-black flex-shrink-0 flex items-center justify-center p-4 border-b md:border-b-0 md:border-r border-slate-800 relative">
+              <div className="relative w-full aspect-[9/16] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800">
+                <div className="absolute top-3 right-3 z-20 flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 shadow-lg">
+                  <Flame className="w-3.5 h-3.5 fill-slate-950" />
+                  <span>{activePreviewClip.virality_score.toFixed(1)}/10</span>
+                </div>
+                <video
+                  src={activePreviewClip.video_url || `/api/video/${activePreviewClip.id}`}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Right: Details, Caption, Actions */}
+            <div className="flex-1 p-6 flex flex-col justify-between overflow-y-auto">
+              <div>
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-purple-400">
+                      Channel: @{activePreviewClip.channel} • ⏱️ {activePreviewClip.duration_seconds.toFixed(0)}s
+                    </span>
+                    <h3 className="text-xl font-black text-white mt-1 leading-snug">
+                      {activePreviewClip.hook_title}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActivePreviewClip(null)}
+                    className="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-700 transition"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Vision QA Box */}
+                <div className="bg-[#090d16] border border-slate-800/80 rounded-xl p-3.5 mb-4">
+                  <div className="flex items-center gap-1.5 text-xs font-extrabold text-purple-400 uppercase tracking-wider mb-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Vision QA: What Actually Happens
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                    {activePreviewClip.what_happens}
+                  </p>
+                  {activePreviewClip.reasoning && (
+                    <p className="text-xs text-slate-400 italic mt-1">
+                      "{activePreviewClip.reasoning}"
+                    </p>
+                  )}
+                </div>
+
+                {/* Caption display */}
+                <div className="mb-4">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Caption
+                  </label>
+                  <p className="text-xs text-slate-300 bg-[#090d16] border border-slate-800 rounded-xl p-3 font-medium">
+                    {editCaptions[activePreviewClip.id] || activePreviewClip.caption}
+                  </p>
+                </div>
+
+                {/* Hashtags display */}
+                <div className="mb-4">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                    Hashtags
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(editHashtags[activePreviewClip.id] || activePreviewClip.hashtags || []).map(tag => (
+                      <span key={tag} className="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-600/20 text-purple-300 border border-purple-500/30">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons in Modal */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800/80 mt-4">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteSingle(activePreviewClip.id)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-slate-800 hover:border-red-500/30 transition"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Clip
+                </button>
+
+                <div className="flex items-center gap-3">
+                  {activePreviewClip.status === "pending" ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleDecline(activePreviewClip.id)}
+                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-red-400 bg-slate-800/40 hover:bg-red-500/10 border border-slate-700/60 transition"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Decline
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleApprove(activePreviewClip.id)}
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-600/30 transition"
+                      >
+                        <Send className="w-4 h-4" />
+                        Approve & Post
+                      </button>
+                    </>
+                  ) : activePreviewClip.status === "posted" ? (
+                    <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                      <CheckCircle className="w-4 h-4 text-emerald-400" />
+                      Published in Buffer Queue
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-red-500/20 text-red-300 border border-red-500/40">
+                      <XCircle className="w-4 h-4 text-red-400" />
+                      Declined & Archived
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Header */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-[#0b0f19]/90 border-b border-slate-800/80 px-8 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -346,9 +611,13 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-xl font-black tracking-tight text-white">AntigravClip Studio</h1>
-                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Live Clipper Active
+                <span className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                  workerStatus.is_running 
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25" 
+                    : "bg-slate-800 text-slate-400 border-slate-700"
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${workerStatus.is_running ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`} />
+                  {workerStatus.is_running ? "Live Clipper Active" : "Clipper Idle"}
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium">Autonomous AI Director • Social Approval & Buffer Queue</p>
@@ -418,7 +687,7 @@ export default function Dashboard() {
                     handleStartWorker(preset.channel, preset.platform);
                   }}
                   className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition flex items-center gap-1.5 ${
-                    workerStatus.channel.toLowerCase() === preset.channel.toLowerCase()
+                    workerStatus.channel.toLowerCase() === preset.channel.toLowerCase() && workerStatus.is_running
                       ? "bg-purple-600/30 border-purple-500 text-purple-200"
                       : "bg-[#090d16] border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
                   }`}
@@ -550,9 +819,21 @@ export default function Dashboard() {
         </div>
 
         {/* Tab & Sorting Filter Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/90 pb-4 mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/90 pb-4 mb-6">
           {/* Tabs */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                activeTab === "all"
+                  ? "bg-purple-600/20 text-purple-300 border border-purple-500/40 shadow-md shadow-purple-600/10"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+              }`}
+            >
+              <Folder className="w-3.5 h-3.5" />
+              All Clips ({stats.total})
+            </button>
+
             <button
               onClick={() => setActiveTab("pending")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
@@ -593,62 +874,247 @@ export default function Dashboard() {
             >
               Declined ({stats.declined})
             </button>
-
-            <button
-              onClick={() => setActiveTab("all")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
-                activeTab === "all"
-                  ? "bg-purple-400/15 text-purple-300 border border-purple-400/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-              }`}
-            >
-              All Clips ({stats.total})
-            </button>
           </div>
 
-          {/* Sort Control */}
-          <div className="flex items-center gap-2 bg-[#0d121e] border border-slate-800 rounded-xl p-1 text-xs">
-            <span className="text-slate-400 px-2 font-medium">Sort By:</span>
-            <button
-              onClick={() => setSortBy("score")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                sortBy === "score"
-                  ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Flame className="w-3.5 h-3.5" /> Highest Score First
-            </button>
-            <button
-              onClick={() => setSortBy("newest")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                sortBy === "newest"
-                  ? "bg-slate-700 text-white shadow"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5" /> Newest First
-            </button>
+          {/* Right Controls: View Toggle (Grid / Feed) + Sort */}
+          <div className="flex items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-[#0d121e] border border-slate-800 rounded-xl p-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
+                  viewMode === "grid"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                title="Windows Folder Media Grid"
+              >
+                <Grid className="w-3.5 h-3.5" /> Folder Grid
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("feed")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold transition ${
+                  viewMode === "feed"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                title="Detailed Review Feed"
+              >
+                <List className="w-3.5 h-3.5" /> Detailed Feed
+              </button>
+            </div>
+
+            {/* Sort Control */}
+            <div className="flex items-center gap-2 bg-[#0d121e] border border-slate-800 rounded-xl p-1 text-xs">
+              <button
+                onClick={() => setSortBy("score")}
+                className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                  sortBy === "score"
+                    ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5" /> Top Score
+              </button>
+              <button
+                onClick={() => setSortBy("newest")}
+                className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                  sortBy === "newest"
+                    ? "bg-slate-700 text-white shadow"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" /> Newest
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Feed List */}
+        {/* Batch Operations Bar (Select All / Delete Selected / Clear All) */}
+        {sortedClips.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0a0e18] border border-slate-800/80 rounded-2xl px-5 py-3 mb-6 shadow-md">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                className="flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white transition px-2.5 py-1.5 rounded-lg hover:bg-slate-800/60"
+              >
+                {selectedClipIds.length === sortedClips.length && sortedClips.length > 0 ? (
+                  <CheckSquare className="w-4 h-4 text-purple-400" />
+                ) : (
+                  <Square className="w-4 h-4 text-slate-500" />
+                )}
+                <span>Select All ({sortedClips.length})</span>
+              </button>
+
+              {selectedClipIds.length > 0 && (
+                <span className="text-xs text-purple-400 font-bold bg-purple-500/10 px-2.5 py-1 rounded-lg border border-purple-500/20">
+                  {selectedClipIds.length} item(s) selected
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              {selectedClipIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleDeleteSelected}
+                  disabled={actionInProgress === "delete-batch"}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-red-300 bg-red-600/20 hover:bg-red-600/30 border border-red-500/40 transition disabled:opacity-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete Selected ({selectedClipIds.length})
+                </button>
+              )}
+
+              {/* Clear All Clips Button */}
+              {confirmDeleteAll ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-400 font-bold">Delete ALL clips permanently?</span>
+                  <button
+                    type="button"
+                    onClick={handleDeleteAll}
+                    disabled={actionInProgress === "delete-all"}
+                    className="px-3 py-1 rounded-lg text-xs font-black text-white bg-red-600 hover:bg-red-500 shadow-md transition"
+                  >
+                    Confirm Delete All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteAll(false)}
+                    className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteAll(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-red-400 hover:bg-slate-800 border border-slate-800 hover:border-red-500/30 transition"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Clear All Clips
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Feed List or Folder Grid */}
         {loading ? (
           <div className="text-center py-24 text-slate-500">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-purple-400" />
-            Loading high-score viral clips...
+            Loading clips...
           </div>
         ) : sortedClips.length === 0 ? (
           <div className="text-center py-20 bg-[#0f1422] border border-slate-800 rounded-3xl p-12">
             <div className="text-5xl mb-4">🎬</div>
-            <h3 className="text-xl font-bold text-white mb-2">No clips in this view</h3>
-            <p className="text-sm text-slate-400 max-w-md mx-auto">
-              {activeTab === "pending"
-                ? "All set! New high-virality clips will appear here automatically as the stream buffer records."
-                : "No clips match the selected filter."}
+            <h3 className="text-xl font-bold text-white mb-2">No clips right now</h3>
+            <p className="text-sm text-slate-400 max-w-md mx-auto mb-6">
+              Clean slate! Paste any Twitch or YouTube streamer handle above and click &quot;Start Autonomous Clipper&quot; to begin capturing fresh clips.
             </p>
+            <button
+              onClick={() => handleStartWorker()}
+              className="px-6 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-600/30 transition"
+            >
+              Start Clipper for @{streamerHandle}
+            </button>
+          </div>
+        ) : viewMode === "grid" ? (
+          /* WINDOWS FOLDER STYLE MEDIA GRID */
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {sortedClips.map((clip) => {
+              const isSelected = selectedClipIds.includes(clip.id);
+              return (
+                <div
+                  key={clip.id}
+                  onClick={() => setActivePreviewClip(clip)}
+                  className={`group relative bg-[#0e1320] border rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-900/30 ${
+                    isSelected 
+                      ? "border-purple-500 ring-2 ring-purple-500/50 bg-[#141a2c]" 
+                      : "border-slate-800/80 hover:border-slate-700"
+                  }`}
+                >
+                  {/* Checkbox (top-left) */}
+                  <button
+                    type="button"
+                    onClick={(e) => toggleSelectClip(clip.id, e)}
+                    className={`absolute top-2.5 left-2.5 z-20 w-6 h-6 rounded-lg flex items-center justify-center transition backdrop-blur-md ${
+                      isSelected
+                        ? "bg-purple-600 text-white shadow-md shadow-purple-600/50 border border-purple-400"
+                        : "bg-black/60 text-slate-400 border border-white/20 opacity-0 group-hover:opacity-100 hover:text-white"
+                    }`}
+                  >
+                    {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                  </button>
+
+                  {/* Virality badge (top-right) */}
+                  <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-slate-950 shadow-lg shadow-orange-500/30">
+                    <Flame className="w-3 h-3 fill-slate-950" />
+                    <span>{clip.virality_score.toFixed(1)}</span>
+                  </div>
+
+                  {/* 9:16 Video Thumbnail Container */}
+                  <div className="relative aspect-[9/16] bg-black overflow-hidden flex items-center justify-center">
+                    <video
+                      src={clip.video_url || `/api/video/${clip.id}`}
+                      preload="metadata"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+
+                    {/* Hover Play Overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-purple-600/90 text-white flex items-center justify-center shadow-xl shadow-purple-600/50 transform group-hover:scale-110 transition-transform">
+                        <Play className="w-6 h-6 fill-white ml-0.5" />
+                      </div>
+                    </div>
+
+                    {/* Duration Badge (bottom-left) */}
+                    <div className="absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded-md text-[10px] font-black bg-black/75 text-slate-300 backdrop-blur-sm border border-white/10">
+                      {clip.duration_seconds.toFixed(0)}s
+                    </div>
+                  </div>
+
+                  {/* Folder Item Card Details */}
+                  <div className="p-3 bg-[#0a0e18] border-t border-slate-800/80">
+                    <h4 className="text-xs font-bold text-white line-clamp-2 leading-tight mb-2 group-hover:text-purple-300 transition-colors">
+                      {clip.hook_title}
+                    </h4>
+
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className={`flex items-center gap-1 font-extrabold uppercase tracking-wider text-[10px] ${
+                        clip.status === "posted"
+                          ? "text-emerald-400"
+                          : clip.status === "declined"
+                          ? "text-red-400"
+                          : "text-amber-400"
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          clip.status === "posted" ? "bg-emerald-400" : clip.status === "declined" ? "bg-red-400" : "bg-amber-400"
+                        }`} />
+                        {clip.status}
+                      </span>
+
+                      {/* Quick delete button */}
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteSingle(clip.id, e)}
+                        className="p-1 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition opacity-0 group-hover:opacity-100"
+                        title="Delete clip"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
+          /* DETAILED REVIEW FEED VIEW */
           <div className="space-y-6">
             {sortedClips.map((clip, index) => {
               const channels = selectedChannels[clip.id] || [];
@@ -825,36 +1291,65 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Footer Actions */}
+                      {/* Footer Actions: STRICT DECLINE LOGIC */}
                       <div className="flex items-center justify-between pt-4 border-t border-slate-800/80">
-                        <div className="text-xs text-slate-500">
-                          {clip.created_at ? `Captured: ${clip.created_at}` : "Fresh Stream Clip"}
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <span>{clip.created_at ? `Captured: ${clip.created_at}` : "Fresh Stream Clip"}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteSingle(clip.id, e)}
+                            className="p-1 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition ml-2"
+                            title="Delete clip"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            disabled={actionInProgress === clip.id}
-                            onClick={() => handleDecline(clip.id)}
-                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-red-400 bg-slate-800/40 hover:bg-red-500/10 border border-slate-700/60 transition disabled:opacity-50"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            Decline
-                          </button>
+                          {/* ONLY show Decline on PENDING clips! */}
+                          {clip.status === "pending" && (
+                            <>
+                              <button
+                                type="button"
+                                disabled={actionInProgress === clip.id}
+                                onClick={() => handleDecline(clip.id)}
+                                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-red-400 bg-slate-800/40 hover:bg-red-500/10 border border-slate-700/60 transition disabled:opacity-50"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                Decline
+                              </button>
 
-                          <button
-                            type="button"
-                            disabled={actionInProgress === clip.id || clip.status === "posted"}
-                            onClick={() => handleApprove(clip.id)}
-                            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-600/30 transition disabled:opacity-50 disabled:shadow-none"
-                          >
-                            {actionInProgress === clip.id ? (
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Send className="w-4 h-4" />
-                            )}
-                            {clip.status === "posted" ? "Posted to Buffer" : "Approve & Post to Buffer"}
-                          </button>
+                              <button
+                                type="button"
+                                disabled={actionInProgress === clip.id}
+                                onClick={() => handleApprove(clip.id)}
+                                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-600/30 transition disabled:opacity-50 disabled:shadow-none"
+                              >
+                                {actionInProgress === clip.id ? (
+                                  <RefreshCw className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Send className="w-4 h-4" />
+                                )}
+                                Approve & Post to Buffer
+                              </button>
+                            </>
+                          )}
+
+                          {/* When POSTED: Show success badge, NO decline button! */}
+                          {clip.status === "posted" && (
+                            <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                              <CheckCircle className="w-4 h-4 text-emerald-400" />
+                              Published in Buffer Queue
+                            </span>
+                          )}
+
+                          {/* When DECLINED: Show declined badge, NO approve button */}
+                          {clip.status === "declined" && (
+                            <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black bg-red-500/20 text-red-300 border border-red-500/40">
+                              <XCircle className="w-4 h-4 text-red-400" />
+                              Declined & Archived
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
