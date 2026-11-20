@@ -8,7 +8,9 @@ import os
 import sys
 import time
 import threading
-from typing import Optional
+from typing import Optional, List
+from collections import deque
+from datetime import datetime
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -27,6 +29,69 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Global logging system
+class LogManager:
+    def __init__(self, maxlen=500):
+        self.logs = deque(maxlen=maxlen)
+        self._lock = threading.Lock()
+        self.add("[System] AntigravClip Cloud Engine initialized and listening", source="System", level="info")
+
+    def add(self, message: str, source: str = "Engine", level: str = "info"):
+        now = datetime.now().strftime("%H:%M:%S")
+        entry = {
+            "id": f"{time.time()}_{len(self.logs)}",
+            "time": now,
+            "message": message.strip(),
+            "source": source,
+            "level": level
+        }
+        with self._lock:
+            self.logs.append(entry)
+
+    def get_all(self, limit: int = 200):
+        with self._lock:
+            return list(self.logs)[-limit:]
+
+    def clear(self):
+        with self._lock:
+            self.logs.clear()
+            self.add("[System] Console logs cleared by user", source="System", level="info")
+
+log_manager = LogManager()
+
+
+class StdoutCapture:
+    def __init__(self, original_stdout, log_mgr):
+        self.original_stdout = original_stdout
+        self.log_mgr = log_mgr
+
+    def write(self, s):
+        self.original_stdout.write(s)
+        self.original_stdout.flush()
+        text = s.strip()
+        if text:
+            level = "info"
+            lower = text.lower()
+            if "error" in lower or "exception" in lower or "fail" in lower:
+                level = "error"
+            elif "spike detected" in lower or "warning" in lower or "warn" in lower:
+                level = "warning"
+            elif "success" in lower or "passed" in lower or "rendered" in lower or "ready-to-post" in lower:
+                level = "success"
+
+            source = "Engine"
+            if text.startswith("["):
+                end_bracket = text.find("]")
+                if end_bracket > 0:
+                    source = text[1:end_bracket].strip()
+
+            self.log_mgr.add(text, source=source, level=level)
+
+    def flush(self):
+        self.original_stdout.flush()
+
+sys.stdout = StdoutCapture(sys.stdout, log_manager)
 
 # Global orchestrator state
 class EngineState:
@@ -66,6 +131,29 @@ def get_status():
         "pending_clips": len([c for c in clips if c.get("status") == "pending"]),
         "posted_clips": len([c for c in clips if c.get("status") in ["posted", "approved"]]),
     }
+
+
+class AddLogRequest(BaseModel):
+    message: str
+    source: Optional[str] = "UI"
+    level: Optional[str] = "info"
+
+
+@app.get("/api/logs")
+def get_logs(limit: int = 150):
+    return {"logs": log_manager.get_all(limit)}
+
+
+@app.post("/api/logs")
+def add_log(req: AddLogRequest):
+    log_manager.add(req.message, source=req.source, level=req.level)
+    return {"status": "logged"}
+
+
+@app.delete("/api/logs")
+def clear_logs():
+    log_manager.clear()
+    return {"status": "cleared"}
 
 
 def _run_clipper_loop(config: dict, channel: str, platform: str):
