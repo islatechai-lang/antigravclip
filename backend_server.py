@@ -243,6 +243,13 @@ def _supabase_bridge_loop():
         print("[Cloud Bridge] ⚠️ Missing Supabase URL or Key in environment! Bridge aborted.")
         return
 
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+
+    session = requests.Session()
+    retries = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
+    session.mount("https://", HTTPAdapter(max_retries=retries))
+
     headers = {
         "apikey": supabase_key,
         "Authorization": f"Bearer {supabase_key}",
@@ -255,7 +262,7 @@ def _supabase_bridge_loop():
 
     while True:
         try:
-            r = requests.get(f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control", headers=headers, timeout=5)
+            r = session.get(f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control", headers=headers, timeout=8)
             if r.ok:
                 rows = r.json()
                 if rows:
@@ -265,7 +272,18 @@ def _supabase_bridge_loop():
                     target_platform = (ctrl.get("hook_title") or "twitch").strip().lower()
 
                     if cmd == "start":
-                        if not state.is_running or state.current_channel != target_channel or state.current_platform != target_platform:
+                        if state.is_running and state.current_channel == target_channel and state.current_platform == target_platform:
+                            # Already actively running, ensure Supabase reflects running
+                            try:
+                                session.patch(
+                                    f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
+                                    headers=headers,
+                                    json={"status": "running", "caption": str(int(time.time()))},
+                                    timeout=5
+                                )
+                            except Exception:
+                                pass
+                        else:
                             print(f"[Cloud Bridge] 🚀 Received START command for @{target_channel} ({target_platform}) from Vercel!")
                             if state.is_running:
                                 stop_clipper()
@@ -273,27 +291,34 @@ def _supabase_bridge_loop():
                             config = load_config("config.yaml")
                             state.current_channel = target_channel
                             state.current_platform = target_platform
+                            state.is_running = True
                             state.worker_thread = threading.Thread(
                                 target=_run_clipper_loop,
                                 args=(config, target_channel, target_platform),
                                 daemon=True
                             )
                             state.worker_thread.start()
-                            requests.patch(
-                                f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
-                                headers=headers,
-                                json={"status": "running", "caption": str(int(time.time()))},
-                                timeout=5
-                            )
+                            try:
+                                session.patch(
+                                    f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
+                                    headers=headers,
+                                    json={"status": "running", "caption": str(int(time.time()))},
+                                    timeout=5
+                                )
+                            except Exception:
+                                pass
                     elif cmd == "stop" and state.is_running:
                         print(f"[Cloud Bridge] 🛑 Received STOP command from Vercel!")
                         stop_clipper()
-                        requests.patch(
-                            f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
-                            headers=headers,
-                            json={"status": "stopped", "caption": str(int(time.time()))},
-                            timeout=5
-                        )
+                        try:
+                            session.patch(
+                                f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
+                                headers=headers,
+                                json={"status": "stopped", "caption": str(int(time.time()))},
+                                timeout=5
+                            )
+                        except Exception:
+                            pass
 
             # Sync latest logs to Supabase every 3 seconds for Vercel Live Console
             now = time.time()
@@ -301,15 +326,17 @@ def _supabase_bridge_loop():
                 last_log_sync = now
                 latest_logs = log_manager.get_all(35)
                 if latest_logs:
-                    requests.patch(
-                        f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_logs",
-                        headers=headers,
-                        json={"what_happens": json.dumps(latest_logs), "status": "active"},
-                        timeout=5
-                    )
+                    try:
+                        session.patch(
+                            f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_logs",
+                            headers=headers,
+                            json={"what_happens": json.dumps(latest_logs), "status": "active"},
+                            timeout=5
+                        )
+                    except Exception:
+                        pass
         except Exception as ex:
-            # Print warning if network fails
-            print(f"[Cloud Bridge] Sync warning: {ex}")
+            pass
         time.sleep(2)
 
 
