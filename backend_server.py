@@ -260,6 +260,23 @@ def _supabase_bridge_loop():
     print(f"[Cloud Bridge] 🌐 Supabase Cloud Control Bridge active & listening for Vercel commands...")
     last_log_sync = 0.0
 
+    # Ensure clean standby state on startup: wait for user frontend interaction
+    try:
+        r_init = session.get(f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control", headers=headers, timeout=5)
+        if r_init.ok and r_init.json():
+            init_data = r_init.json()[0]
+            if init_data.get("status") in ["running", "start"]:
+                session.patch(
+                    f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
+                    headers=headers,
+                    json={"status": "stopped", "caption": str(int(time.time()))},
+                    timeout=5
+                )
+    except Exception:
+        pass
+
+    log_manager.add("[System] AntigravClip Cloud Engine standing by. Ready for streamer selection from Vercel.", source="System", level="info")
+
     while True:
         try:
             r = session.get(f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control", headers=headers, timeout=8)
@@ -285,6 +302,7 @@ def _supabase_bridge_loop():
                                 pass
                         else:
                             print(f"[Cloud Bridge] 🚀 Received START command for @{target_channel} ({target_platform}) from Vercel!")
+                            log_manager.add(f"[Bridge] 🚀 Starting clipper for @{target_channel} on {target_platform.upper()}...", source="Bridge", level="info")
                             if state.is_running:
                                 stop_clipper()
                                 time.sleep(1)
@@ -307,8 +325,9 @@ def _supabase_bridge_loop():
                                 )
                             except Exception:
                                 pass
-                    elif cmd == "stop" and state.is_running:
+                    elif (cmd == "stop" or cmd == "stopped") and state.is_running:
                         print(f"[Cloud Bridge] 🛑 Received STOP command from Vercel!")
+                        log_manager.add("[Bridge] 🛑 Pausing stream clipper as requested from Vercel.", source="Bridge", level="info")
                         stop_clipper()
                         try:
                             session.patch(
@@ -320,9 +339,9 @@ def _supabase_bridge_loop():
                         except Exception:
                             pass
 
-            # Sync latest logs to Supabase every 3 seconds for Vercel Live Console
+            # Sync latest logs to Supabase every 2.5 seconds for Vercel Live Console
             now = time.time()
-            if now - last_log_sync >= 3.0:
+            if now - last_log_sync >= 2.5:
                 last_log_sync = now
                 latest_logs = log_manager.get_all(35)
                 if latest_logs:
@@ -335,13 +354,14 @@ def _supabase_bridge_loop():
                         )
                     except Exception:
                         pass
-        except Exception as ex:
+        except Exception:
             pass
         time.sleep(2)
 
 
-# Automatically start the Supabase Cloud Bridge thread
-threading.Thread(target=_supabase_bridge_loop, daemon=True, name="SupabaseBridge").start()
+@app.on_event("startup")
+def on_startup():
+    threading.Thread(target=_supabase_bridge_loop, daemon=True, name="SupabaseBridge").start()
 
 
 if __name__ == "__main__":
@@ -352,4 +372,4 @@ if __name__ == "__main__":
 
     port = args.port or int(os.environ.get("BACKEND_PORT", 8000))
     print(f"🚀 Starting AntigravClip Cloud Backend on port {port}...")
-    uvicorn.run("backend_server:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run(app, host="0.0.0.0", port=port, reload=False)
