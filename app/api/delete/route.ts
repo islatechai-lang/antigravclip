@@ -21,7 +21,11 @@ export async function POST(req: Request) {
     if (all) {
       // Clear all clips
       clips = [];
-      fs.writeFileSync(dataPath, JSON.stringify([], null, 2), "utf-8");
+      try {
+        fs.writeFileSync(dataPath, JSON.stringify([], null, 2), "utf-8");
+      } catch {
+        // Read-only filesystem on Vercel serverless
+      }
 
       // Delete from Supabase
       try {
@@ -40,7 +44,11 @@ export async function POST(req: Request) {
 
     // Filter out deleted clips
     clips = clips.filter((c) => !idsToDelete.includes(c.id));
-    fs.writeFileSync(dataPath, JSON.stringify(clips, null, 2), "utf-8");
+    try {
+      fs.writeFileSync(dataPath, JSON.stringify(clips, null, 2), "utf-8");
+    } catch {
+      // Read-only filesystem on Vercel serverless
+    }
 
     // Delete from Supabase
     try {

@@ -148,23 +148,27 @@ export async function POST(req: Request) {
       }
     }
 
-    // Update local data/clips.json
+    // Update local data/clips.json if writable
     const dataPath = path.join(process.cwd(), "data", "clips.json");
     if (fs.existsSync(dataPath)) {
-      const raw = fs.readFileSync(dataPath, "utf-8");
-      const clips = JSON.parse(raw);
-      const target = clips.find((c: any) => c.id === clipId);
-      if (target) {
-        if (atLeastOneSuccess) {
-          target.status = "posted";
+      try {
+        const raw = fs.readFileSync(dataPath, "utf-8");
+        const clips = JSON.parse(raw);
+        const target = clips.find((c: any) => c.id === clipId);
+        if (target) {
+          if (atLeastOneSuccess) {
+            target.status = "posted";
+          }
+          target.caption = caption;
+          target.hashtags = cleanTags;
+          target.video_url = videoUrl;
+          target.posted_channels = selectedChannels;
+          target.buffer_post_ids = postResults;
+          target.approved_at = new Date().toISOString();
+          fs.writeFileSync(dataPath, JSON.stringify(clips, null, 2), "utf-8");
         }
-        target.caption = caption;
-        target.hashtags = cleanTags;
-        target.video_url = videoUrl;
-        target.posted_channels = selectedChannels;
-        target.buffer_post_ids = postResults;
-        target.approved_at = new Date().toISOString();
-        fs.writeFileSync(dataPath, JSON.stringify(clips, null, 2), "utf-8");
+      } catch {
+        // Read-only filesystem on Vercel serverless
       }
     }
 
