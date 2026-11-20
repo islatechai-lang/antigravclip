@@ -91,6 +91,15 @@ class StdoutCapture:
     def flush(self):
         self.original_stdout.flush()
 
+    def isatty(self):
+        return getattr(self.original_stdout, "isatty", lambda: False)()
+
+    def fileno(self):
+        return getattr(self.original_stdout, "fileno", lambda: 1)()
+
+    def __getattr__(self, name):
+        return getattr(self.original_stdout, name)
+
 sys.stdout = StdoutCapture(sys.stdout, log_manager)
 
 # Global orchestrator state
