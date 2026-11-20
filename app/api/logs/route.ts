@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,6 +17,21 @@ export async function GET(req: Request) {
       // ignore
     }
   }
+
+  // Fallback: Query live logs from Supabase Cloud Bridge
+  try {
+    const { data, error } = await supabase
+      .from("clips")
+      .select("what_happens")
+      .eq("id", "sys_worker_logs")
+      .maybeSingle();
+
+    if (!error && data?.what_happens) {
+      const parsed = JSON.parse(data.what_happens);
+      return NextResponse.json({ logs: parsed });
+    }
+  } catch {}
+
   return NextResponse.json({ logs: [] });
 }
 

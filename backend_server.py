@@ -7,7 +7,12 @@ live clipping on any streamer handle (Twitch/YouTube) 24/7 in the cloud (Render/
 import os
 import sys
 import time
+import json
 import threading
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 from typing import Optional, List
 from collections import deque
 from datetime import datetime
@@ -235,6 +240,7 @@ def _supabase_bridge_loop():
     supabase_url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
     supabase_key = os.environ.get("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
     if not supabase_url or not supabase_key:
+        print("[Cloud Bridge] ⚠️ Missing Supabase URL or Key in environment! Bridge aborted.")
         return
 
     headers = {
@@ -244,7 +250,9 @@ def _supabase_bridge_loop():
         "Prefer": "resolution=merge-duplicates"
     }
 
-    print("[Cloud Bridge] 🌐 Supabase Cloud Control Bridge active & listening for Vercel commands...")
+    print(f"[Cloud Bridge] 🌐 Supabase Cloud Control Bridge active & listening for Vercel commands...")
+    last_log_sync = 0.0
+
     while True:
         try:
             r = requests.get(f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control", headers=headers, timeout=5)
@@ -286,8 +294,22 @@ def _supabase_bridge_loop():
                             json={"status": "stopped", "caption": str(int(time.time()))},
                             timeout=5
                         )
-        except Exception:
-            pass
+
+            # Sync latest logs to Supabase every 3 seconds for Vercel Live Console
+            now = time.time()
+            if now - last_log_sync >= 3.0:
+                last_log_sync = now
+                latest_logs = log_manager.get_all(35)
+                if latest_logs:
+                    requests.patch(
+                        f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_logs",
+                        headers=headers,
+                        json={"what_happens": json.dumps(latest_logs), "status": "active"},
+                        timeout=5
+                    )
+        except Exception as ex:
+            # Print warning if network fails
+            print(f"[Cloud Bridge] Sync warning: {ex}")
         time.sleep(2)
 
 
