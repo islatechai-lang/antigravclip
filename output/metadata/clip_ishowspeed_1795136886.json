@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795136886.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed can't handle this chaos\ud83d\ude02\ud83d\udd25",
+  "caption": "When the game gets too real! #IshowSpeed #GamingMoments #EpicFails",
+  "virality_score": 8.5,
+  "reasoning": "Ishowspeed showcases high energy reactions throughout the clip, particularly with the repeated phrase 'Get off me.' which amplifies the intensity. The context of the chat reactions further enhances the comedic value, making it relatable and engaging for viewers.",
+  "duration_seconds": 50.0,
+  "created_at": "2026-11-20 09:09:24",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed can't handle this chaos\ud83d\ude02\ud83d\udd25",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795136843.jpg"
+  }
+}

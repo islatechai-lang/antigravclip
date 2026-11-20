@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795142678.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed lost his shoes \ud83e\udd23",
+  "caption": "ishowspeed's morning routine goes wrong #GamingFails #ishowspeed #GTA6",
+  "virality_score": 8.5,
+  "reasoning": "The clip features ishowspeed's high-energy reaction to losing his shoes, which is a relatable and humorous moment. The clip has a clear narrative arc, starting with ishowspeed's confusion and ending with his frustrated reaction.",
+  "duration_seconds": 15.92,
+  "created_at": "2026-11-20 10:45:05",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed lost his shoes \ud83e\udd23",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795142633.jpg"
+  }
+}

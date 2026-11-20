@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795140243.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Bro thought he was safe\ud83d\ude2d\ud83d\ude02",
+  "caption": "Bro was not ready for this \ud83d\udc80 #gta6 #ishowspeed #gaming",
+  "virality_score": 7.5,
+  "reasoning": "Sentence-aligned reaction moment during chat spike.",
+  "duration_seconds": 22.82,
+  "created_at": "2026-11-20 10:04:41",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Bro thought he was safe\ud83d\ude2d\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795140183.jpg"
+  }
+}

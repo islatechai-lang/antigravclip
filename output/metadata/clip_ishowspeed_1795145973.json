@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795145973.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed lost it over this\ud83d\udc80\ud83e\udd23",
+  "caption": "Speed's reaction had me crying\ud83d\ude2d\ud83d\udd25 #ishowspeed #funnyclips #streamerlife #gamingmemes",
+  "virality_score": 8.7,
+  "reasoning": "At 50.0s, there is a massive chat reaction spike with emotes like 'please', 'sleep', 'bro', and 'speed', indicating a highly engaging moment. The repeated phrase 'Ted is my goal wrong, bro' combined with Speed's likely confused or exaggerated reaction aligns with his high-energy viral style. The clip captures the buildup, reaction, and aftermath, making it a complete narrative arc.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 11:40:00",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed lost it over this\ud83d\udc80\ud83e\udd23",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795145910.jpg"
+  }
+}

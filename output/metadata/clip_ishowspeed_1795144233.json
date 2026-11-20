@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795144233.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Bro is losing it over this! \ud83e\udd23",
+  "caption": "When the game gets too real! #IShowSpeed #GamingMoments #Viral",
+  "virality_score": 8.5,
+  "reasoning": "IShowSpeed reacts with high energy, engaging with the audience and expressing disbelief, making it a prime candidate for viral content. The chat's reactions indicate strong viewer engagement at 50 seconds.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 11:10:54",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Bro is losing it over this! \ud83e\udd23",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795144186.jpg"
+  }
+}

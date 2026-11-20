@@ -1,0 +1,77 @@
+# Autonomous AI Stream Clipper Configuration
+target:
+  platform: "youtube"
+  channel: "ishowspeed"
+
+chat_monitor:
+  baseline_window_sec: 60
+  sample_interval_sec: 2
+  spike_std_multiplier: 1.6     # Lowered for more responsive clipping triggers
+  min_messages_per_sec: 4.0
+  cooldown_sec: 35
+
+stream_buffer:
+  buffer_duration_sec: 300      # 5 minute rolling circular buffer
+  slice_pre_spike_sec: 50       # Capture 50s before chat spike (context/setup)
+  slice_post_spike_sec: 25      # Capture 25s after chat spike (streamer reaction)
+  stream_quality: "720p60,720p,best"
+
+ai_director:
+  provider: "unorouter"         # "unorouter", "gemini", "openai", or "heuristic"
+  model: "gpt-4o:free"
+  api_base_url: "https://api.unorouter.com/v1/chat/completions"
+  api_key: "sk-UE7RO864vd28guRe8sGAp3W6HfsiZgG3ktSNwlZHrNH9k21C"
+  virality_threshold: 6.0       # Adjusted to 6.0 to capture high-energy streamer reactions
+  min_clip_duration_sec: 14.0
+  max_clip_duration_sec: 50.0   # Sweet spot for Shorts/TikTok/Reels
+
+video_compositor:
+  width: 1080
+  height: 1920
+  fps: 30
+  facecam:
+    enabled: true
+    auto_detect: true           # Detect streamer facecam automatically
+    default_box: [0.0, 0.0, 0.25, 0.30] # [x, y, w, h] as ratio of 16:9 frame if auto-detect fails
+    canvas_ratio: 0.35          # Facecam occupies top 35% of 9:16 screen
+  gameplay:
+    canvas_ratio: 0.65          # Gameplay occupies bottom 65% of 9:16 screen
+  subtitles:
+    enabled: true
+    font: "Impact"              # Standard viral font available on all Windows systems
+    font_size: 26
+    highlight_color: "&H0000FFFF" # Vibrant Yellow (ASS &HAABBGGRR)
+    base_color: "&H00FFFFFF"      # White
+    words_per_group: 3           # Snappy, short-form modern subtitle pacing
+  hook_banner:
+    enabled: true
+    duration_sec: 3.5           # Show hook banner at top of clip for first 3.5 seconds
+
+storage:
+  cache_dir: "./cache"
+  output_dir: "./output"
+  storyboards_dir: "./output/storyboards"
+  data_dir: "./data"
+
+vision_qa:
+  enabled: true
+  min_comprehension_score: 6.0
+  api_base_url: "https://api.unorouter.com/v1/chat/completions"
+
+notifications:
+  enabled: true
+  to_email: "princederder44@gmail.com"
+  from_email: "onboarding@resend.dev"
+  resend_api_key: ""
+  dashboard_url: "http://localhost:3000"
+
+buffer:
+  api_token: ""
+  organization_id: "6aff3390741beb0c722bd52e"
+  default_hashtags:
+    - "#gta6"
+    - "#ishowspeed"
+    - "#gaming"
+    - "#shorts"
+    - "#viral"
+    - "#fyp"

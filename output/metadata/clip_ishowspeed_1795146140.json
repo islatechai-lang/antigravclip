@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795146140.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed is losing it over this\ud83e\udd23\ud83d\udd25",
+  "caption": "You won't believe his reaction! #IShowSpeed #Gaming #ViralMoment",
+  "virality_score": 8.5,
+  "reasoning": "High energy reactions with chat engagement and humor from ishowspeed. The clip captures his lively interaction with viewers and game moments, making it appealing for virality.",
+  "duration_seconds": 32.37,
+  "created_at": "2026-11-20 11:43:29",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed is losing it over this\ud83e\udd23\ud83d\udd25",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795146064.jpg"
+  }
+}

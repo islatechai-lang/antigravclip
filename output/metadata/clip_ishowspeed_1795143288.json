@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795143288.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed's CRAZY Risk Life Rant\ud83d\ude02\ud83d\udd25",
+  "caption": "When you're too invested in the game! #ishowspeed #gaming #risklife",
+  "virality_score": 8.2,
+  "reasoning": "The clip features ishowspeed's high-energy reaction to a situation, with him repeating 'why not risk life when it's going' multiple times, showcasing his excitement and engagement. The clip also includes a clear narrative arc, starting with the setup and ending with the streamer's reaction and laughter aftermath.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 10:55:14",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed's CRAZY Risk Life Rant\ud83d\ude02\ud83d\udd25",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795143188.jpg"
+  }
+}

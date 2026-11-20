@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795142146.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed's airport meltdown\ud83d\udc80\u2708\ufe0f",
+  "caption": "Speed really lost it this time \ud83e\udd23\u2708\ufe0f #ishowspeed #funnyclips #streamerreacts #gamingmoments",
+  "virality_score": 8.7,
+  "reasoning": "The moment at 50.0s features a high-energy reaction from IShowSpeed, where he exclaims 'Hey, hell are you stopping?' This is followed by a humorous and chaotic dialogue about airport security and his disbelief at the situation. The chat's reaction spike and the use of emotes like 'DRIVER' and 'RETURN' indicate strong engagement. The clip captures Speed's signature high-energy reaction and includes a complete narrative arc with a setup, climax, and reaction aftermath.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 10:36:07",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed's airport meltdown\ud83d\udc80\u2708\ufe0f",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795142099.jpg"
+  }
+}

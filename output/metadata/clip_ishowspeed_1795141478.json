@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795141478.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed lost it over this\ud83d\udc80\ud83e\udd23",
+  "caption": "When Speed can't handle the heat\ud83d\udd25\ud83d\ude02 #ishowspeed #funnyreaction #gamingclips #viral",
+  "virality_score": 9.2,
+  "reasoning": "At 50.0s, there is a massive chat reaction spike likely due to Speed's high-energy reaction or unexpected in-game moment. Speed's emotional outbursts and chaotic energy are key to virality. The clip includes his reaction climax and aftermath, ensuring a complete narrative arc.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 10:24:58",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed lost it over this\ud83d\udc80\ud83e\udd23",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795141433.jpg"
+  }
+}

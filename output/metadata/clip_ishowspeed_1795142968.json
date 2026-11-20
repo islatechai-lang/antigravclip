@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795142968.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed lost it over this\ud83d\ude2d\ud83d\ude02",
+  "caption": "This moment had chat going crazy!\ud83d\udd25 #ishowspeed #funnyclips #streamer #gaming",
+  "virality_score": 8.7,
+  "reasoning": "The chat velocity spike at 50.0s indicates a strong reaction moment. Around this time, ishowspeed is actively reacting with high energy and repeating phrases, which aligns with his signature style that drives virality. The repetitive nature of 'He's not like straight on either way' combined with the chat's reaction emotes suggests a funny or absurd moment that resonates with his audience. Including the aftermath of his reaction will ensure the clip has a complete narrative arc.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 10:49:52",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed lost it over this\ud83d\ude2d\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795142925.jpg"
+  }
+}

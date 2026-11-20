@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795134340.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed loses it \ud83d\ude02",
+  "caption": "ishowspeed's hilarious reaction to a crazy in-game moment! #GamingReactions #ishowspeed #ViralGaming",
+  "virality_score": 8.2,
+  "reasoning": "The clip features ishowspeed reacting to an in-game moment with high energy, and the chat reaction emotes suggest a strong emotional response from the audience. The audio transcript shows ishowspeed speaking and reacting, making it a good candidate for a viral clip.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 08:26:04",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed loses it \ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795134298.jpg"
+  }
+}

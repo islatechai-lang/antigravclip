@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795136521.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed's catchphrase is wild!\ud83d\ude02",
+  "caption": "When he can't stop saying it! #IShowSpeed #GamingMoments #Viral",
+  "virality_score": 8.5,
+  "reasoning": "The clip features IShowSpeed energetically repeating 'I'll catch you' multiple times, showcasing high energy and engagement with the chat, which aligns with viral content characteristics.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 09:02:11",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed's catchphrase is wild!\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795136481.jpg"
+  }
+}

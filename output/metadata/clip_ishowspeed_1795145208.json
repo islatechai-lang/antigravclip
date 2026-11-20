@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795145208.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed accepted his fate\ud83d\udc80\ud83d\ude2d",
+  "caption": "He really thought it was over \ud83d\ude2d #ishowspeed #speed #gaming #fyp",
+  "virality_score": 8.7,
+  "reasoning": "The clip captures IShowSpeed in a full panic loop repeating 'I'm gonna die' right through the 50.0s chat velocity spike. It is a high-energy, active reaction with a clear climax and a clean aftermath where he says 'I appreciate you worrying about me, bro.' The moment is self-contained, emotionally exaggerated, and highly memeable for Shorts/TikTok.",
+  "duration_seconds": 17.75,
+  "created_at": "2026-11-20 11:27:25",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed accepted his fate\ud83d\udc80\ud83d\ude2d",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795145123.jpg"
+  }
+}

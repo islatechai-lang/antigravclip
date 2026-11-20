@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795134558.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed loses it \ud83e\udd23",
+  "caption": "When you realize it's just a game \ud83d\ude02 #GamingFails #ishowspeed #Shorts",
+  "virality_score": 8.2,
+  "reasoning": "The clip features ishowspeed's high-energy reaction to a situation in the game, which is a key factor in making a clip viral. The speaker attribution is clear, and the clip has a complete narrative arc, starting with the setup and ending with the reaction climax and aftermath. The hook title and caption are designed to be attention-grabbing and conversational, with a focus on trending hashtags.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 08:29:41",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed loses it \ud83e\udd23",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795134494.jpg"
+  }
+}

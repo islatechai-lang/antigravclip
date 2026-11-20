@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795144837.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Bro's water break turned wild\ud83d\udca6\ud83d\ude02",
+  "caption": "Speed's hilarious poolside moments! #IShowSpeed #FunnyMoments #StreamerLife",
+  "virality_score": 8.5,
+  "reasoning": "IShowSpeed showcases high energy with comedic reactions and interaction with the chat, particularly around the 50-second mark. The clip captures his lively personality and the humorous context, making it suitable for virality.",
+  "duration_seconds": 24.12,
+  "created_at": "2026-11-20 11:21:35",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Bro's water break turned wild\ud83d\udca6\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795144775.jpg"
+  }
+}

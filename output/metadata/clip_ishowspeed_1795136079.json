@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795136079.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed lost it completely\ud83d\udc80\ud83d\ude02",
+  "caption": "This man is on another level\ud83e\udd23\ud83d\udd25 #ishowspeed #funny #meme #gaming",
+  "virality_score": 8.7,
+  "reasoning": "The chat reaction spike at 50.0s indicates a high-energy moment. The repetitive and chaotic nature of Speed's dialogue ('won't you, won't you, won't you') suggests a potential meltdown or comedic moment, which aligns with Speed's typical viral content. Including the reaction climax and aftermath will provide a complete narrative arc for maximum engagement.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 08:55:02",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed lost it completely\ud83d\udc80\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795136005.jpg"
+  }
+}

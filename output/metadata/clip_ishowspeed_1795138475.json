@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795138475.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed lost it completely\ud83d\udc80\ud83d\ude02",
+  "caption": "This meltdown was next level\ud83e\udd23\ud83d\udd25 #ishowspeed #funnyclips #streamerreacts #viral",
+  "virality_score": 9.2,
+  "reasoning": "The clip contains a massive chat velocity spike at 50.0s, indicating high viewer engagement. IShowSpeed's repetitive 'no, no, no' reaction is highly emotional and comedic, aligning perfectly with his viral persona. The moment builds up to a peak reaction and sustains energy, making it ideal for short-form content.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 09:34:53",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed lost it completely\ud83d\udc80\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795138407.jpg"
+  }
+}

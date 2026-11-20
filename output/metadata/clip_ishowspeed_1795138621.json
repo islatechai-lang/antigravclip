@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795138621.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed's plane rage is unreal\ud83d\ude31",
+  "caption": "You won't believe his reaction! \ud83d\ude02 #IShowSpeed #GTA6 #StreamerMoments #Gaming",
+  "virality_score": 8.5,
+  "reasoning": "Ishowspeed displays high energy and frustration with the game, repeating 'I hate it' multiple times, which resonates with viewers. The chaotic nature of the commentary and the streamer's emotional reactions, combined with chat's engagement, creates a compelling and relatable moment.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 09:37:20",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed's plane rage is unreal\ud83d\ude31",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795138575.jpg"
+  }
+}

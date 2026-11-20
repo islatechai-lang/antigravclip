@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795146322.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Bro's reaction is priceless\ud83e\udd23",
+  "caption": "When Speed can't believe what just happened! #IShowSpeed #GamingMoments #ViralLaughs",
+  "virality_score": 8.5,
+  "reasoning": "IShowSpeed exhibits high energy reactions throughout the clip, including engaging with chat and displaying disbelief. The moment captures his personality effectively while including a chaotic gaming context, making it likely to resonate with viewers.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 11:45:36",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Bro's reaction is priceless\ud83e\udd23",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795146281.jpg"
+  }
+}

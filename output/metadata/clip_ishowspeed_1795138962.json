@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795138962.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "What do you think, Speed?\ud83e\udd14\ud83d\ude02",
+  "caption": "Speed's reactions are priceless! #IShowSpeed #GamingMoments #Viral",
+  "virality_score": 8.7,
+  "reasoning": "IShowSpeed reacts with high energy and humor, asking questions and expressing disbelief. The chat's emote reactions align with his emotional peaks, enhancing the clip's appeal. The segment captures an engaging moment with a clear narrative arc.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 09:43:03",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "What do you think, Speed?\ud83e\udd14\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795138922.jpg"
+  }
+}

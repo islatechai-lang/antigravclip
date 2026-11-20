@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795146684.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Bro turned into a baby\ud83d\udc80\ud83d\ude02",
+  "caption": "Speed really said 'baby bro' \ud83d\udc80\ud83d\udd25 #ishowspeed #funny #gaming #bro",
+  "virality_score": 8.7,
+  "reasoning": "The clip captures ishowspeed's high-energy reaction with repeated use of 'bro' and a humorous tone, which aligns with his viral content style. The chat velocity spike at 50.0s indicates strong viewer engagement, and the segment includes a complete narrative arc with a clear setup and payoff.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 11:51:52",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Bro turned into a baby\ud83d\udc80\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795146633.jpg"
+  }
+}

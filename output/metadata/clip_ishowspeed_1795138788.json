@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795138788.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed's wild hotel balcony story\ud83d\ude31\ud83d\ude02",
+  "caption": "You won't believe what happened next! #IShowSpeed #GamingMoments #LOL #EpicFail",
+  "virality_score": 8.5,
+  "reasoning": "IShowSpeed exhibits high energy with reactions and humor throughout the clip, particularly in the sections where he expresses disbelief and engages with the game. The chat reaction spike aligns with moments of heightened emotion and interaction.",
+  "duration_seconds": 50.0,
+  "created_at": "2026-11-20 09:40:56",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed's wild hotel balcony story\ud83d\ude31\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795138738.jpg"
+  }
+}

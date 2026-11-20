@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795137433.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "He just wants to chill!\ud83d\ude02",
+  "caption": "When Speed gets tired of missions! #IShowSpeed #Gaming #FunnyMoments #StreamHighlights",
+  "virality_score": 8.5,
+  "reasoning": "IShowSpeed shows high energy reactions and engages with chat, creating a funny moment around the game. The clip includes a clear setup and payoff, making it suitable for viral content.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 09:17:36",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "He just wants to chill!\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795137394.jpg"
+  }
+}

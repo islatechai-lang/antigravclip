@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795137575.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "He can't stop playing!\ud83d\ude31",
+  "caption": "When gaming takes over your life! \ud83d\ude02 #IShowSpeed #Gaming #LiveStream",
+  "virality_score": 8.5,
+  "reasoning": "IShowSpeed's energetic reaction about not wanting to sleep after hitting 6 to 3 million, combined with humor around his lawyer, fits the criteria for high-energy content and chat interactions. The clip features multiple emotional peaks and a relatable narrative about gaming and sleep deprivation.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 09:19:56",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "He can't stop playing!\ud83d\ude31",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795137532.jpg"
+  }
+}

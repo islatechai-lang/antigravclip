@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795141222.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "He can't wait to yell about him!\ud83e\udd23\ud83d\udd25",
+  "caption": "You won't believe his reaction! #IShowSpeed #GTA6 #EpicMoments",
+  "virality_score": 8.5,
+  "reasoning": "IShowSpeed expresses excitement and anticipation in a lively manner, making it engaging for viewers. The conversation flows well, leading to high-energy moments that resonate with the audience, especially with the chat reaction spike around the 50-second mark.",
+  "duration_seconds": 32.94,
+  "created_at": "2026-11-20 10:21:15",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "He can't wait to yell about him!\ud83e\udd23\ud83d\udd25",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795141171.jpg"
+  }
+}

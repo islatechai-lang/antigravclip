@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795142820.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "He\u2019s a fizzy little boy\ud83e\udd23",
+  "caption": "Speed's sock moment is legendary! \ud83d\ude02 #IShowSpeed #FunnyMoments #Gaming",
+  "virality_score": 8.5,
+  "reasoning": "Ishowspeed displays high energy and humor in this segment, particularly with the mention of being a 'fizzy little boy' and the quirky sock reference. The chat reactions confirm the moment's appeal, aligning with viral content characteristics.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 10:47:15",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "He\u2019s a fizzy little boy\ud83e\udd23",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795142779.jpg"
+  }
+}

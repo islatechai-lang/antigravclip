@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795140591.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed's gym antics with quirky NPCs \ud83d\udcaa",
+  "caption": "He can't be serious about this! #IShowSpeed #GTA6 #FunnyMoments #Viral",
+  "virality_score": 8.5,
+  "reasoning": "IShowSpeed displays high energy reactions, humor, and engages with chat. The moment includes a clear setup and a complete payoff with laughter, making it suitable for a viral clip.",
+  "duration_seconds": 16.26,
+  "created_at": "2026-11-20 10:10:21",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 8.0,
+    "what_actually_happens": "The streamer is interacting with NPCs in a gym setting within GTA 6, where they appear to be engaging in a humorous workout scenario.",
+    "premise_hook": "Speed's gym antics with quirky NPCs \ud83d\udcaa",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795140540.jpg"
+  }
+}

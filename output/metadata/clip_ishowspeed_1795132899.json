@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795132899.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed just can't believe this! \ud83d\ude02\ud83e\udd2f",
+  "caption": "This had us all in stitches! #IShowSpeed #GamingMoments #Viral",
+  "virality_score": 8.5,
+  "reasoning": "Ishowspeed displays high energy reactions, particularly when he expresses disbelief and humor while interacting with the game. The segment captures a thrilling moment with chat reactions that enhance the engagement level.",
+  "duration_seconds": 41.66,
+  "created_at": "2026-11-20 08:02:39",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed just can't believe this! \ud83d\ude02\ud83e\udd2f",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795132855.jpg"
+  }
+}

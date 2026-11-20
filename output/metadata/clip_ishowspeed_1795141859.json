@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795141859.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Bro's coffee takes are wild\u2615\ud83e\udd23",
+  "caption": "You won't believe his coffee opinions! #IShowSpeed #FunnyMoments #StreamerLife #LOL",
+  "virality_score": 8.5,
+  "reasoning": "Ishowspeed showcases high energy reactions, including laughter and humor that resonate with the audience. The segment captures a mix of fun banter and absurdity, enhanced by chat interactions.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 10:31:22",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Bro's coffee takes are wild\u2615\ud83e\udd23",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795141807.jpg"
+  }
+}

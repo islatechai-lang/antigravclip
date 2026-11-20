@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795139112.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed's epic landing attempt failed \ud83d\ude2d",
+  "caption": "This is why we love Speed! #ishowspeed #funny #streamer #viral",
+  "virality_score": 8.7,
+  "reasoning": "The clip captures ishowspeed reacting with high energy during the 'unsuccessful landing' moment at 51.52s, followed by his exclamation 'Go!' at 54.96s. This aligns with his signature style of emotional and animated reactions, which are highly engaging for his audience. The chat velocity spike at 50.0s further confirms the moment's impact.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 09:45:31",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 8.0,
+    "what_actually_happens": "The streamer attempts a daring landing in GTA 6 but fails spectacularly, resulting in a 'Failed' message on screen.",
+    "premise_hook": "Speed's epic landing attempt failed \ud83d\ude2d",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795139069.jpg"
+  }
+}

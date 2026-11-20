@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795146496.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed's epic meltdown over a game\ud83d\ude31\ud83d\ude02",
+  "caption": "You won't believe his reaction! #IShowSpeed #GamingMoments #EpicFail",
+  "virality_score": 9.0,
+  "reasoning": "IShowSpeed's repeated phrase 'I'm not doing it' creates high energy and disbelief, combined with engaging chat reactions that heighten the humor and relatability. The moment captures a complete narrative arc with a clear reaction and aftermath.",
+  "duration_seconds": 27.4,
+  "created_at": "2026-11-20 11:49:21",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed's epic meltdown over a game\ud83d\ude31\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795146414.jpg"
+  }
+}

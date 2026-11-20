@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795133528.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed loses it on cops \ud83d\ude02\ud83d\udd25",
+  "caption": "When you get caught by the cops in GTA! #GTA6 #ishowspeed #gaming",
+  "virality_score": 8.2,
+  "reasoning": "The clip features ishowspeed reacting with high energy to a situation in the game, which is a key factor in making a clip viral. The speaker attribution is clear, and the clip has a complete narrative arc, starting with the setup and ending with the reaction climax and aftermath.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 08:12:31",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed loses it on cops \ud83d\ude02\ud83d\udd25",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795133482.jpg"
+  }
+}

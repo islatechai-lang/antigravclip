@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795139594.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Where's he at?\ud83d\udc80\ud83d\ude02",
+  "caption": "Speed's mind is racing! #IShowSpeed #ViralMoment #Gaming",
+  "virality_score": 8.5,
+  "reasoning": "Ishowspeed shows high energy and engagement with the chat interaction, particularly around the 50-second mark. His reactions and the chat's emotes indicate a strong emotional response, making it likely to resonate with viewers.",
+  "duration_seconds": 47.77,
+  "created_at": "2026-11-20 09:54:21",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Where's he at?\ud83d\udc80\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795139555.jpg"
+  }
+}

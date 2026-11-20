@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795142305.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Bro, always function!\ud83d\udcaa\ud83d\ude02",
+  "caption": "When you're just trying to work out! #IShowSpeed #FitnessFails #StreamerLife #Viral",
+  "virality_score": 8.5,
+  "reasoning": "Ishowspeed actively reacts and engages with the chat, showcasing high-energy moments and humor. The segment includes strong reactions and relatable content, aligning with viral trends.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 10:38:48",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Bro, always function!\ud83d\udcaa\ud83d\ude02",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795142261.jpg"
+  }
+}

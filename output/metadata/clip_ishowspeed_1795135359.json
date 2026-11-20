@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795135359.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "He\u2019s wilding out over crypto\ud83d\udc80\ud83d\udcb8",
+  "caption": "You won't believe his take on art! \ud83d\ude02 #IShowSpeed #Crypto #Viral",
+  "virality_score": 8.9,
+  "reasoning": "Ishowspeed exhibits high energy and emotional reactions throughout the clip, particularly with humorous statements about crypto and art, aligning well with viral moments. The chat reactions further enhance engagement.",
+  "duration_seconds": 30.42,
+  "created_at": "2026-11-20 08:43:24",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "He\u2019s wilding out over crypto\ud83d\udc80\ud83d\udcb8",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795135315.jpg"
+  }
+}

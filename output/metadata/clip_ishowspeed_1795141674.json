@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795141674.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed vs the taxi NPC\ud83d\ude2d\ud83d\ude95",
+  "caption": "Speed had no idea what was going on with this taxi \ud83d\ude2d\ud83d\ude95 #ishowspeed #gta #funny #viral",
+  "virality_score": 7.4,
+  "reasoning": "The clip captures a funny GTA NPC taxi encounter with ishowspeed actively reacting in confusion: 'Wait, what did he do wrong?' The chat spike at 50.0s aligns with Speed's reaction to the absurd taxi dialogue. The selected range includes the full setup, Speed's confused interjection, the NPC response, and follow-up banter, making it a complete short-form moment rather than a silent cutscene.",
+  "duration_seconds": 14.6,
+  "created_at": "2026-11-20 10:28:19",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed vs the taxi NPC\ud83d\ude2d\ud83d\ude95",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795141607.jpg"
+  }
+}

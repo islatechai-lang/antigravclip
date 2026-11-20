@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build
+.next/
+out/
+
+# Stream video cache & temp slices
+cache/
+*.ts
+*.ass
+*.tmp
+
+# Large video output binaries (prevent GitHub 100MB file limit)
+output/*.mp4
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+venv/
+env/
+scratch/
+sample/
+
+# Environment files
+.env
+.env*.local
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795135788.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed forgot his own address\ud83d\ude2d",
+  "caption": "The taxi driver asked for an address and Speed had zero answers \ud83d\udc80 #ishowspeed #gta #funny #viral",
+  "virality_score": 8.3,
+  "reasoning": "ishowspeed is actively reacting to an in-game taxi driver asking for an address. His repeated 'I don't know' response creates a funny, escalating NPC interaction, and the chat spike around 50.0s confirms the moment landed. The clip has a clear setup, repeated punchline, and enough aftermath to feel complete.",
+  "duration_seconds": 14.51,
+  "created_at": "2026-11-20 08:50:08",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 8.5,
+    "what_actually_happens": "Speed is standing on the street next to a taxi, repeatedly telling the driver he doesn't know his own address.",
+    "premise_hook": "Speed forgot his own address\ud83d\ude2d",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795135728.jpg"
+  }
+}
