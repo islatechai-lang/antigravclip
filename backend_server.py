@@ -108,8 +108,8 @@ class EngineState:
         self.orchestrator: Optional[ClipperOrchestrator] = None
         self.worker_thread: Optional[threading.Thread] = None
         self.is_running: bool = False
-        self.current_channel: str = "ishowspeed"
-        self.current_platform: str = "youtube"
+        self.current_channel: str = ""
+        self.current_platform: str = "twitch"
         self.started_at: Optional[float] = None
 
 state = EngineState()
@@ -186,15 +186,18 @@ def start_clipper(req: StartClipperRequest):
     if not clean_channel:
         raise HTTPException(status_code=400, detail="Channel handle cannot be empty")
 
+    platform = (req.platform or "twitch").strip().lower()
+    if platform not in ["twitch", "youtube"]:
+        platform = "twitch"
+
     if state.is_running:
-        if state.current_channel == clean_channel:
-            return {"status": "already_running", "channel": clean_channel}
+        if state.current_channel == clean_channel and state.current_platform == platform:
+            return {"status": "already_running", "channel": clean_channel, "platform": platform}
         # Stop existing monitor
         stop_clipper()
         time.sleep(1)
 
     config = load_config("config.yaml")
-    platform = req.platform or ("youtube" if clean_channel in ["ishowspeed"] else "twitch")
     state.current_channel = clean_channel
     state.current_platform = platform
 
@@ -217,18 +220,15 @@ def stop_clipper():
     if not state.is_running or not state.orchestrator:
         return {"status": "not_running"}
 
-    print("[Cloud Backend] Stopping active clipper...")
+    print(f"[Cloud Backend] Stopping active clipper for {state.current_platform} #{state.current_channel}...")
     try:
-        if state.orchestrator.chat_monitor:
-            state.orchestrator.chat_monitor.stop()
-        if state.orchestrator.stream_buffer:
-            state.orchestrator.stream_buffer.stop_recording()
+        state.orchestrator.stop()
     except Exception as e:
         print(f"[Cloud Backend] Warning during stop: {e}")
 
     state.is_running = False
     state.started_at = None
-    return {"status": "stopped", "channel": state.current_channel}
+    return {"status": "stopped", "channel": state.current_channel, "platform": state.current_platform}
 
 
 if __name__ == "__main__":

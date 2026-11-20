@@ -50,9 +50,9 @@ class ChatMonitor:
         cooldown_sec: float = 35.0,
         on_spike: Optional[Callable[[SpikeEvent], None]] = None,
     ):
-        self.channel = channel.lower().lstrip("#")
-        self.platform = platform.lower()
-        if "youtube" in self.channel or self.channel.startswith("@") or self.channel == "ishowspeed":
+        self.channel = channel.lower().lstrip("#").lstrip("@")
+        self.platform = platform.lower().strip()
+        if "youtube.com" in channel or "youtu.be" in channel:
             self.platform = "youtube"
 
         self.baseline_window_sec = baseline_window_sec
@@ -148,6 +148,7 @@ class ChatMonitor:
 
         while self._running:
             try:
+                print(f"[ChatMonitor] Connecting to Twitch IRC (irc.chat.twitch.tv:6667) for #{self.channel} as {nickname}...")
                 self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self._sock.settimeout(15.0)
                 self._sock.connect((server, port))
@@ -155,6 +156,7 @@ class ChatMonitor:
                 self._sock.send(f"PASS SCHMULLUS\r\n".encode("utf-8"))
                 self._sock.send(f"NICK {nickname}\r\n".encode("utf-8"))
                 self._sock.send(f"JOIN #{self.channel}\r\n".encode("utf-8"))
+                print(f"[ChatMonitor] 🟢 Connected to Twitch IRC #{self.channel}! Listening for live chat messages...")
 
                 buffer = ""
                 privmsg_regex = re.compile(r"^:[^!]+![^@]+@[^\s]+\s+PRIVMSG\s+#[^\s]+\s+:(.*)$")
@@ -198,7 +200,11 @@ class ChatMonitor:
         mps = count / self.sample_interval_sec
         now = time.time()
 
-        if len(self._history) >= 4:
+        if len(self._history) < 4:
+            if (now - self._last_heartbeat_time) >= 3.0:
+                self._last_heartbeat_time = now
+                print(f"[ChatMonitor] ⏳ Calibrating chat velocity baseline ({len(self._history)}/4 samples | current {mps:.1f} msg/s)...", flush=True)
+        else:
             import math
             mean = sum(self._history) / len(self._history)
             variance = sum((x - mean) ** 2 for x in self._history) / len(self._history)

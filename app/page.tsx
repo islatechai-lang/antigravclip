@@ -93,6 +93,7 @@ export default function Dashboard() {
   const [autoScroll, setAutoScroll] = useState<boolean>(true);
   const [copiedLogs, setCopiedLogs] = useState<boolean>(false);
   const logsEndRef = useRef<HTMLDivElement | null>(null);
+  const isWorkerInitRef = useRef<boolean>(false);
 
   // Cloud Worker Controller State
   const [workerStatus, setWorkerStatus] = useState<{
@@ -102,11 +103,11 @@ export default function Dashboard() {
     uptime_seconds?: number;
   }>({
     is_running: false,
-    channel: "ishowspeed",
-    platform: "youtube"
+    channel: "tarik",
+    platform: "twitch"
   });
-  const [streamerHandle, setStreamerHandle] = useState<string>("ishowspeed");
-  const [streamerPlatform, setStreamerPlatform] = useState<"twitch" | "youtube">("youtube");
+  const [streamerHandle, setStreamerHandle] = useState<string>("tarik");
+  const [streamerPlatform, setStreamerPlatform] = useState<"twitch" | "youtube">("twitch");
   const [workerLoading, setWorkerLoading] = useState<boolean>(false);
 
   const popularPresets = [
@@ -209,9 +210,14 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         setWorkerStatus(data);
-        if (data.channel && data.channel !== "offline") {
-          setStreamerHandle(data.channel);
-          if (data.platform) setStreamerPlatform(data.platform);
+        if (!isWorkerInitRef.current) {
+          isWorkerInitRef.current = true;
+          if (data.channel && data.channel !== "offline") {
+            setStreamerHandle(data.channel);
+          }
+          if (data.platform === "twitch" || data.platform === "youtube") {
+            setStreamerPlatform(data.platform);
+          }
         }
       }
     } catch (err) {
@@ -868,7 +874,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   disabled={workerLoading}
-                  onClick={() => handleStartWorker()}
+                  onClick={() => handleStartWorker(streamerHandle, streamerPlatform)}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-lg shadow-purple-600/25 transition disabled:opacity-50"
                 >
                   {workerLoading ? (
@@ -876,7 +882,7 @@ export default function Dashboard() {
                   ) : (
                     <Play className="w-3.5 h-3.5 fill-white" />
                   )}
-                  {workerStatus.is_running && workerStatus.channel.toLowerCase() === streamerHandle.trim().toLowerCase()
+                  {workerStatus.is_running && workerStatus.channel.toLowerCase() === streamerHandle.trim().toLowerCase() && workerStatus.platform === streamerPlatform
                     ? "Restart Clipper"
                     : workerStatus.is_running
                     ? "Switch Streamer"

@@ -34,12 +34,11 @@ def load_config(config_path: str = "config.yaml") -> dict:
 class ClipperOrchestrator:
     def __init__(self, config: dict, channel_override: str = None, platform_override: str = None):
         self.config = config
-        self.channel = (channel_override or config.get("target", {}).get("channel", "tarik")).lower().lstrip("#")
+        self.channel = (channel_override or config.get("target", {}).get("channel", "tarik")).lower().lstrip("#").lstrip("@")
         
-        target_platform = platform_override or config.get("target", {}).get("platform")
-        if not target_platform:
-            target_platform = "youtube" if self.channel == "ishowspeed" or self.channel.startswith("@") else "twitch"
+        target_platform = (platform_override or config.get("target", {}).get("platform") or "twitch").lower()
         self.platform = target_platform
+        self._running = False
         
         # Initialize modules
         c_mon = config.get("chat_monitor", {})
@@ -126,49 +125,67 @@ class ClipperOrchestrator:
         self.recent_transcripts = []
         self.last_clip_rendered_time = 0.0
 
+    def stop(self):
+        print(f"[ClipperOrchestrator] Stopping engine for {self.platform.upper()} #{self.channel}...")
+        self._running = False
+        if self.chat_monitor:
+            self.chat_monitor.stop()
+        if self.stream_buffer:
+            self.stream_buffer.stop_recording()
+
     def start_live(self):
+        self._running = True
         print("=" * 60)
         print(f"🚀 AUTONOMOUS AI CLIPPER ENGINE STARTED")
-        print(f"Target Channel : #{self.channel}")
+        print(f"Target Channel : #{self.channel} ({self.platform.upper()})")
         print(f"AI Provider    : {self.ai_director.provider} ({self.ai_director.model_name})")
         print(f"Virality Gate  : >= {self.ai_director.virality_threshold}/10.0")
         print(f"Output Vault   : {self.compositor.output_dir.resolve()}")
         print("=" * 60)
 
-        # Start stream buffer recording
-        started = self.stream_buffer.start_recording()
-        if not started:
-            print("[Warning] Live stream buffer could not attach. Retrying in background...")
+        # Check live stream status
+        stream_url = self.stream_buffer.get_channel_url()
+        print(f"[StreamBuffer] Probing stream for {stream_url}...")
+        is_live = self.stream_buffer.is_stream_live()
+        if is_live:
+            print(f"🟢 [StreamBuffer] Broadcast is LIVE! Starting circular video buffer...")
+            self.stream_buffer.start_recording()
+        else:
+            print(f"⚠️ [StreamBuffer] Streamer @{self.channel} is currently OFFLINE on {self.platform.upper()}. Standing by for broadcast...")
 
         # Start chat monitor
         self.chat_monitor.start()
-        print(f"[ChatMonitor] Listening to chat velocity on #{self.channel}...")
+        print(f"[ChatMonitor] Listening to chat velocity on {self.platform.upper()} #{self.channel}...")
 
         consecutive_offline_checks = 0
         try:
-            while True:
-                time.sleep(15)
-                # Active health watchdog: check if buffer stream is still flowing
-                healthy = self.stream_buffer.ensure_healthy()
-                if not healthy:
-                    consecutive_offline_checks += 1
-                    # After 3 failed reconnect attempts (~45s), verify if stream has officially ended
-                    if consecutive_offline_checks >= 3:
-                        if not self.stream_buffer.is_stream_live():
-                            print("\n" + "=" * 60)
-                            print(f"🛑 STREAM ENDED: #{self.channel} has officially finished broadcasting.")
-                            print("Finalizing tasks and shutting down clipper engine gracefully...")
-                            print("=" * 60)
-                            self.chat_monitor.stop()
-                            self.stream_buffer.stop_recording()
-                            print(f"✅ Clipper engine stopped cleanly. All clips are in: {self.compositor.output_dir.resolve()}")
-                            break
-                else:
+            while self._running:
+                # Sleep in short slices to allow prompt shutdown when requested
+                for _ in range(15):
+                    if not self._running:
+                        break
+                    time.sleep(1)
+
+                if not self._running:
+                    break
+
+                is_live = self.stream_buffer.is_stream_live()
+                if is_live:
+                    healthy = self.stream_buffer.ensure_healthy()
+                    if not healthy:
+                        print(f"🔄 [StreamBuffer] Re-attaching live stream recording buffer...")
+                        self.stream_buffer.start_recording()
                     consecutive_offline_checks = 0
+                else:
+                    consecutive_offline_checks += 1
+                    # Log periodically so user knows standby is active
+                    if consecutive_offline_checks % 4 == 1:
+                        print(f"⏳ [StreamBuffer] Standby: @{self.channel} is offline on {self.platform.upper()}. Waiting for live broadcast...")
         except KeyboardInterrupt:
             print("\nShutting down clipper engine...")
-            self.chat_monitor.stop()
-            self.stream_buffer.stop_recording()
+        finally:
+            self.stop()
+            print(f"✅ Clipper engine stopped cleanly for #{self.channel}.")
 
     def handle_spike(self, event: SpikeEvent):
         # Short cooldown to prevent duplicate cuts of the same reaction

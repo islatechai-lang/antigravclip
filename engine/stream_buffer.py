@@ -40,7 +40,7 @@ class StreamBuffer:
     def get_channel_url(self) -> str:
         """Constructs target live stream URL."""
         clean_name = self.channel.lstrip("@").lower()
-        if self.platform == "youtube" or "youtube" in clean_name or clean_name == "ishowspeed":
+        if self.platform == "youtube":
             return f"https://www.youtube.com/@{clean_name}/live"
         return f"https://twitch.tv/{clean_name}"
 
@@ -49,7 +49,7 @@ class StreamBuffer:
         channel_url = self.get_channel_url()
         try:
             cmd = ["streamlink", "--stream-url", channel_url]
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
             return res.returncode == 0 and res.stdout.strip().startswith("http")
         except Exception:
             return False
