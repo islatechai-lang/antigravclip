@@ -1,7 +1,8 @@
 """
 Animated Subtitle Engine (Advanced SubStation Alpha - ASS)
 Generates high-retention, large-format animated subtitles for vertical 9:16 video.
-Features continuous group display, zero-flicker timing, and bold word-pop highlights.
+Features strictly non-overlapping lines, middle-center anchored positioning (never stacks upward),
+and bold viral word-pop highlights without resetting styles.
 """
 
 from typing import List
@@ -13,13 +14,14 @@ class SubtitleBurner:
     def __init__(
         self,
         font_name: str = "Impact",
-        font_size: int = 36,                   # Renders at 72pt in 1080x1920
-        primary_color: str = "&H00FFFFFF",     # Crisp White (ASS: &HAABBGGRR)
-        highlight_color: str = "&H0000FFFF",   # Vibrant Yellow
-        outline_color: str = "&H00000000",     # Deep Black border
-        outline_width: int = 8,                # Bold outline for instant mobile readability
-        words_per_group: int = 3,
-        margin_v: int = 560                    # Placed in the sweet spot of the gameplay area
+        font_size: int = 44,                   # Renders at 88pt in 1080x1920 (large, punchy, mobile-first)
+        primary_color: str = "&H00FFFFFF",     # Crisp Pure White (ASS: &HAABBGGRR)
+        highlight_color: str = "&H0000E5FF",   # Vibrant Cyber Gold / Neon Yellow
+        outline_color: str = "&H00000000",     # Deep Solid Black outline
+        outline_width: int = 9,                # Extra-thick 9px border for max contrast
+        shadow_width: int = 4,                 # 4px drop shadow
+        words_per_group: int = 2,              # Snappy 2-word groups (OpusClip/TikTok standard)
+        pos_y: int = 1320                      # Anchored in safe lower-middle area (below facecam, above TikTok UI)
     ):
         self.font_name = font_name
         self.font_size = font_size
@@ -27,8 +29,9 @@ class SubtitleBurner:
         self.highlight_color = highlight_color
         self.outline_color = outline_color
         self.outline_width = outline_width
+        self.shadow_width = shadow_width
         self.words_per_group = words_per_group
-        self.margin_v = margin_v
+        self.pos_y = pos_y
 
     def generate_ass(
         self,
@@ -38,8 +41,8 @@ class SubtitleBurner:
         output_ass_path: str
     ) -> str:
         """
-        Creates an .ass subtitle file with clean continuous word-level highlight animation,
-        re-indexed to start at 0:00 relative to clip_start_sec.
+        Creates an .ass subtitle file with non-overlapping word-level highlight animation,
+        explicitly anchored at (540, pos_y) so lines NEVER stack awkwardly on top of each other.
         """
         all_words = transcript.all_words()
         
@@ -49,25 +52,31 @@ class SubtitleBurner:
             if (w.end >= clip_start_sec and w.start <= clip_end_sec)
         ]
 
+        if not clip_words:
+            # Empty subtitle file if no words
+            Path(output_ass_path).parent.mkdir(parents=True, exist_ok=True)
+            with open(output_ass_path, "w", encoding="utf-8") as f:
+                f.write("[Script Info]\nTitle: Empty\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\n[Events]\n")
+            return output_ass_path
+
         # Re-index timestamps with positive durations
         reindexed: List[WordTimestamp] = []
         for w in clip_words:
             adj_start = max(0.0, float(w.start) - clip_start_sec)
-            adj_end = max(adj_start + 0.12, float(w.end) - clip_start_sec)
+            adj_end = max(adj_start + 0.10, float(w.end) - clip_start_sec)
             reindexed.append(WordTimestamp(w.word.upper(), adj_start, adj_end))
 
-        # Group words into natural phrases (2-3 words, splitting on pauses or punctuation)
+        # Group words into short punchy phrases (default 2 words, splitting on pauses or punctuation)
         groups: List[List[WordTimestamp]] = []
         current_group: List[WordTimestamp] = []
 
         for i, word in enumerate(reindexed):
             current_group.append(word)
 
-            # Check if we should close this group
             pause_after = False
             if i + 1 < len(reindexed):
                 gap = reindexed[i + 1].start - word.end
-                if gap > 0.35:
+                if gap > 0.28:
                     pause_after = True
 
             has_punctuation = any(word.word.endswith(p) for p in [".", "!", "?", ","])
@@ -79,7 +88,8 @@ class SubtitleBurner:
         if current_group:
             groups.append(current_group)
 
-        # Build ASS file header
+        # Build ASS file header (PlayRes: 1080x1920 vertical)
+        # Alignment=5 (middle-center) + explicit \pos ensures ZERO collisions/stacking
         header = f"""[Script Info]
 Title: TikTok Viral Subtitles
 ScriptType: v4.00+
@@ -89,31 +99,43 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: ViralStyle,{self.font_name},{self.font_size * 2},{self.primary_color},&H000000FF,{self.outline_color},&H80000000,1,0,0,0,100,100,2,0,1,{self.outline_width},2,2,40,40,{self.margin_v},1
+Style: ViralStyle,{self.font_name},{self.font_size * 2},{self.primary_color},&H000000FF,{self.outline_color},&H80000000,1,0,0,0,100,100,2,0,1,{self.outline_width},{self.shadow_width},5,40,40,40,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
         dialogue_lines = []
 
-        for group in groups:
+        for g_idx, group in enumerate(groups):
             if not group:
                 continue
 
-            # Ensure words inside group are sequentially ordered
+            # Ensure word timestamps inside the group are monotonic
             for idx in range(len(group) - 1):
                 if group[idx].end > group[idx + 1].start:
-                    group[idx].end = max(group[idx].start + 0.1, group[idx + 1].start)
+                    group[idx].end = max(group[idx].start + 0.08, group[idx + 1].start)
 
-            # Generate active highlight for each word while preserving continuous group presence
+            # Determine the hard boundary for the end of this group:
+            # Next group's start time prevents ANY overlapping dialogue events!
+            next_group_start = None
+            if g_idx + 1 < len(groups) and groups[g_idx + 1]:
+                next_group_start = groups[g_idx + 1][0].start
+
             for active_idx, active_word in enumerate(group):
-                # Word start time
                 w_start = active_word.start
-                # Word active until next word starts, or active_word.end + 0.15s for last word
+
                 if active_idx + 1 < len(group):
-                    w_end = max(w_start + 0.12, group[active_idx + 1].start)
+                    w_end = max(w_start + 0.10, group[active_idx + 1].start)
                 else:
-                    w_end = max(w_start + 0.15, active_word.end + 0.15)
+                    # Last word in this group
+                    if next_group_start is not None:
+                        w_end = min(active_word.end + 0.10, next_group_start)
+                    else:
+                        w_end = active_word.end + 0.15
+
+                # Guard against zero or negative duration
+                if w_end <= w_start:
+                    w_end = w_start + 0.08
 
                 w_start_str = self._format_ass_time(w_start)
                 w_end_str = self._format_ass_time(w_end)
@@ -121,13 +143,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 styled_text_parts = []
                 for idx, w in enumerate(group):
                     if idx == active_idx:
-                        # Highlight active word with scale pop and vibrant yellow
-                        styled_text_parts.append(f"{{\\c{self.highlight_color}\\fscx112\\fscy112}}{w.word}{{\\r\\c{self.primary_color}}}")
+                        # Popped active word in vibrant highlight color (without \r style wipe)
+                        styled_text_parts.append(f"{{\\c{self.highlight_color}\\fscx112\\fscy112}}{w.word}{{\\c{self.primary_color}\\fscx100\\fscy100}}")
                     else:
-                        styled_text_parts.append(f"{{\\c{self.primary_color}}}{w.word}")
+                        styled_text_parts.append(f"{{\\c{self.primary_color}\\fscx100\\fscy100}}{w.word}")
 
                 line_text = " ".join(styled_text_parts)
-                dialogue_lines.append(f"Dialogue: 0,{w_start_str},{w_end_str},ViralStyle,,0,0,0,,{line_text}")
+                # \an5\pos(540, pos_y) locks position so new lines never jump or stack on top of each other!
+                dialogue_lines.append(f"Dialogue: 0,{w_start_str},{w_end_str},ViralStyle,,0,0,0,,{{\\an5\\pos(540,{self.pos_y})}}{line_text}")
 
         content = header + "\n".join(dialogue_lines) + "\n"
 

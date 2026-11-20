@@ -33,7 +33,8 @@ import {
   Check,
   ChevronRight,
   Maximize2,
-  Minimize2
+  Minimize2,
+  RotateCcw
 } from "lucide-react";
 
 interface ClipItem {
@@ -90,10 +91,11 @@ export default function Dashboard() {
   const [logs, setLogs] = useState<LogEntry[]>([
     { id: "init_1", time: "LIVE", message: "[System] Monitoring console initialized. Ready for stream events.", source: "System", level: "info" }
   ]);
-  const [autoScroll, setAutoScroll] = useState<boolean>(true);
+  const [autoScroll, setAutoScroll] = useState<boolean>(false); // Disabled by default
   const [copiedLogs, setCopiedLogs] = useState<boolean>(false);
   const logsEndRef = useRef<HTMLDivElement | null>(null);
   const isWorkerInitRef = useRef<boolean>(false);
+  const clearedTimestampRef = useRef<number>(0);
 
   // Cloud Worker Controller State
   const [workerStatus, setWorkerStatus] = useState<{
@@ -150,8 +152,27 @@ export default function Dashboard() {
       const res = await fetch("/api/logs");
       if (res.ok) {
         const data = await res.json();
-        if (data.logs && Array.isArray(data.logs) && data.logs.length > 0) {
-          setLogs(data.logs);
+        if (data.logs && Array.isArray(data.logs)) {
+          const minTs = clearedTimestampRef.current;
+          const freshLogs = minTs > 0 
+            ? data.logs.filter((l: LogEntry) => {
+                const parts = l.id.split("_");
+                const ts = parseFloat(parts[0]);
+                return isNaN(ts) || ts >= minTs;
+              })
+            : data.logs;
+
+          if (freshLogs.length > 0) {
+            setLogs(freshLogs);
+          } else if (minTs > 0) {
+            setLogs([{
+              id: `clear_${minTs}`,
+              time: new Date(minTs * 1000).toTimeString().split(" ")[0],
+              message: "[Console] Logs cleared. Waiting for new stream events...",
+              source: "Console",
+              level: "info"
+            }]);
+          }
         }
       }
     } catch {
@@ -160,11 +181,18 @@ export default function Dashboard() {
   };
 
   const clearLogs = async () => {
+    clearedTimestampRef.current = Date.now() / 1000;
+    setLogs([{ 
+      id: `clear_${Date.now()}`, 
+      time: new Date().toTimeString().split(" ")[0], 
+      message: "[Console] Logs cleared.", 
+      source: "Console", 
+      level: "info" 
+    }]);
     try {
       await fetch("/api/logs", { method: "DELETE" });
-      setLogs([{ id: `${Date.now()}`, time: new Date().toTimeString().split(" ")[0], message: "[Console] Logs cleared.", source: "UI", level: "info" }]);
     } catch {
-      setLogs([]);
+      // ignore
     }
   };
 
@@ -212,11 +240,13 @@ export default function Dashboard() {
         setWorkerStatus(data);
         if (!isWorkerInitRef.current) {
           isWorkerInitRef.current = true;
-          if (data.channel && data.channel !== "offline") {
-            setStreamerHandle(data.channel);
-          }
-          if (data.platform === "twitch" || data.platform === "youtube") {
-            setStreamerPlatform(data.platform);
+          if (data.is_running) {
+            if (data.channel && data.channel !== "offline") {
+              setStreamerHandle(data.channel);
+            }
+            if (data.platform === "twitch" || data.platform === "youtube") {
+              setStreamerPlatform(data.platform);
+            }
           }
         }
       }
@@ -1544,10 +1574,10 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={clearLogs}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800/60 transition"
-                    title="Clear console"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-purple-400 hover:bg-slate-800/60 transition"
+                    title="Reset & Clear Console"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <RotateCcw className="w-3.5 h-3.5" />
                   </button>
                   <button
                     type="button"

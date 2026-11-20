@@ -80,10 +80,10 @@ class ClipperOrchestrator:
         sub_cfg = config.get("video_compositor", {}).get("subtitles", {})
         self.subtitle_burner = SubtitleBurner(
             font_name=sub_cfg.get("font", "Impact"),
-            font_size=sub_cfg.get("font_size", 24),
+            font_size=sub_cfg.get("font_size", 44),
             primary_color=sub_cfg.get("base_color", "&H00FFFFFF"),
-            highlight_color=sub_cfg.get("highlight_color", "&H0000FFFF"),
-            words_per_group=sub_cfg.get("words_per_group", 3)
+            highlight_color=sub_cfg.get("highlight_color", "&H0000E5FF"),
+            words_per_group=sub_cfg.get("words_per_group", 2)
         )
 
         v_cfg = config.get("video_compositor", {})

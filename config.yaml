@@ -39,10 +39,10 @@ video_compositor:
   subtitles:
     enabled: true
     font: "Impact"              # Standard viral font available on all Windows systems
-    font_size: 26
-    highlight_color: "&H0000FFFF" # Vibrant Yellow (ASS &HAABBGGRR)
-    base_color: "&H00FFFFFF"      # White
-    words_per_group: 3           # Snappy, short-form modern subtitle pacing
+    font_size: 44
+    highlight_color: "&H0000E5FF" # Vibrant Cyber Gold / Neon Yellow (ASS &HAABBGGRR)
+    base_color: "&H00FFFFFF"      # Crisp White
+    words_per_group: 2           # Snappy 2-word high-retention viral subtitle pacing
   hook_banner:
     enabled: true
     duration_sec: 3.5           # Show hook banner at top of clip for first 3.5 seconds
