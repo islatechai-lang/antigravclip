@@ -135,6 +135,11 @@ def stop_clipper():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=None)
+    args, _ = parser.parse_known_args()
+
+    port = args.port or int(os.environ.get("BACKEND_PORT", 8000))
     print(f"🚀 Starting AntigravClip Cloud Backend on port {port}...")
     uvicorn.run("backend_server:app", host="0.0.0.0", port=port, reload=False)

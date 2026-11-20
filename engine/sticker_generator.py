@@ -18,17 +18,28 @@ class StickerGenerator:
         self.emoji_cache_dir = self.cache_dir / "emojis"
         self.emoji_cache_dir.mkdir(parents=True, exist_ok=True)
         
-        # Prefer system fonts for crisp bold text
+        # Prefer system fonts for crisp bold text across Windows and Linux (Docker)
         self.font_candidates = [
-            "C:/Windows/Fonts/arialbd.ttf",   # Arial Bold
-            "C:/Windows/Fonts/segoeuib.ttf",  # Segoe UI Bold
-            "C:/Windows/Fonts/calibrib.ttf",  # Calibri Bold
+            "C:/Windows/Fonts/arialbd.ttf",   # Windows Arial Bold
+            "C:/Windows/Fonts/segoeuib.ttf",  # Windows Segoe UI Bold
+            "C:/Windows/Fonts/calibrib.ttf",  # Windows Calibri Bold
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", # Linux / Render Docker
+            "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",   # Linux FreeSans
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", # Linux Liberation
         ]
-        self.font_path = "C:/Windows/Fonts/arialbd.ttf"
+        self.font_path = None
         for fc in self.font_candidates:
             if os.path.exists(fc):
                 self.font_path = fc
                 break
+
+    def _load_font(self, size: int) -> ImageFont.FreeTypeFont:
+        if self.font_path and os.path.exists(self.font_path):
+            try:
+                return ImageFont.truetype(self.font_path, size)
+            except Exception:
+                pass
+        return ImageFont.load_default()
 
     def _get_emoji_image(self, emoji_char: str, target_size: int) -> Image.Image:
         """
@@ -101,7 +112,7 @@ class StickerGenerator:
         Renders a photo-accurate Instagram/Reels white pill sticker with bold black text
         and authentic full-color emojis, centered and formatted.
         """
-        font = ImageFont.truetype(self.font_path, font_size)
+        font = self._load_font(font_size)
         lines = self._wrap_text_and_emojis(hook_title)
 
         # Regex matching emoji ranges
