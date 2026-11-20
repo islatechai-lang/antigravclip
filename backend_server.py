@@ -231,6 +231,70 @@ def stop_clipper():
     return {"status": "stopped", "channel": state.current_channel, "platform": state.current_platform}
 
 
+def _supabase_bridge_loop():
+    supabase_url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+    supabase_key = os.environ.get("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
+    if not supabase_url or not supabase_key:
+        return
+
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates"
+    }
+
+    print("[Cloud Bridge] 🌐 Supabase Cloud Control Bridge active & listening for Vercel commands...")
+    while True:
+        try:
+            r = requests.get(f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control", headers=headers, timeout=5)
+            if r.ok:
+                rows = r.json()
+                if rows:
+                    ctrl = rows[0]
+                    cmd = ctrl.get("status")
+                    target_channel = (ctrl.get("channel") or "ishowspeed").strip().lower().lstrip("#").lstrip("@")
+                    target_platform = (ctrl.get("hook_title") or "twitch").strip().lower()
+
+                    if cmd == "start":
+                        if not state.is_running or state.current_channel != target_channel or state.current_platform != target_platform:
+                            print(f"[Cloud Bridge] 🚀 Received START command for @{target_channel} ({target_platform}) from Vercel!")
+                            if state.is_running:
+                                stop_clipper()
+                                time.sleep(1)
+                            config = load_config("config.yaml")
+                            state.current_channel = target_channel
+                            state.current_platform = target_platform
+                            state.worker_thread = threading.Thread(
+                                target=_run_clipper_loop,
+                                args=(config, target_channel, target_platform),
+                                daemon=True
+                            )
+                            state.worker_thread.start()
+                            requests.patch(
+                                f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
+                                headers=headers,
+                                json={"status": "running", "caption": str(int(time.time()))},
+                                timeout=5
+                            )
+                    elif cmd == "stop" and state.is_running:
+                        print(f"[Cloud Bridge] 🛑 Received STOP command from Vercel!")
+                        stop_clipper()
+                        requests.patch(
+                            f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
+                            headers=headers,
+                            json={"status": "stopped", "caption": str(int(time.time()))},
+                            timeout=5
+                        )
+        except Exception:
+            pass
+        time.sleep(2)
+
+
+# Automatically start the Supabase Cloud Bridge thread
+threading.Thread(target=_supabase_bridge_loop, daemon=True, name="SupabaseBridge").start()
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()

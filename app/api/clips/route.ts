@@ -13,10 +13,11 @@ export async function GET() {
       const { data, error } = await supabase
         .from("clips")
         .select("*")
+        .neq("status", "deleted")
         .order("virality_score", { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        clips = data;
+      if (!error && data) {
+        clips = data.filter((c: any) => c.status !== "deleted" && !c.id.startsWith("test_"));
       }
     } catch (e) {
       console.warn("Supabase query fallback to local/bundled clips:", e);
@@ -35,6 +36,7 @@ export async function GET() {
       } else {
         clips = clipsFallback as any[];
       }
+      clips = (clips || []).filter((c: any) => c.status !== "deleted" && !c.id.startsWith("test_"));
     }
 
     // Ensure every clip has a valid public video_url for cloud playback & Buffer

@@ -537,6 +537,8 @@ export default function Dashboard() {
 
   // Filter clips by tab
   const tabFiltered = clips.filter(c => {
+    if ((c as any).status === "deleted") return false;
+    if (c.id.startsWith("test_")) return false;
     if (activeTab === "all") return true;
     if (activeTab === "pending") return c.status === "pending";
     if (activeTab === "posted") return c.status === "posted" || c.status === "approved";

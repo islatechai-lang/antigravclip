@@ -19,19 +19,26 @@ export async function POST(req: Request) {
     }
 
     if (all) {
-      // Clear all clips
+      // 1. Soft delete in Supabase (status: "deleted") which always succeeds with anon key
+      try {
+        await supabase.from("clips").update({ status: "deleted" }).neq("id", "none");
+      } catch (e) {
+        console.warn("Supabase soft delete all error:", e);
+      }
+
+      // 2. Also attempt hard delete in Supabase
+      try {
+        await supabase.from("clips").delete().neq("id", "none");
+      } catch (e) {
+        console.warn("Supabase delete all error:", e);
+      }
+
+      // 3. Clear local clips if writable
       clips = [];
       try {
         fs.writeFileSync(dataPath, JSON.stringify([], null, 2), "utf-8");
       } catch {
         // Read-only filesystem on Vercel serverless
-      }
-
-      // Delete from Supabase
-      try {
-        await supabase.from("clips").delete().neq("id", "none");
-      } catch (e) {
-        console.warn("Supabase delete all error:", e);
       }
 
       return NextResponse.json({ success: true, count: 0, clips: [] });
@@ -42,19 +49,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No clip IDs specified" }, { status: 400 });
     }
 
-    // Filter out deleted clips
+    // 1. Soft delete in Supabase (status: "deleted")
+    try {
+      await supabase.from("clips").update({ status: "deleted" }).in("id", idsToDelete);
+    } catch (e) {
+      console.warn("Supabase soft delete error:", e);
+    }
+
+    // 2. Also attempt hard delete in Supabase
+    try {
+      await supabase.from("clips").delete().in("id", idsToDelete);
+    } catch (e) {
+      console.warn("Supabase delete error:", e);
+    }
+
+    // 3. Filter out deleted clips locally if writable
     clips = clips.filter((c) => !idsToDelete.includes(c.id));
     try {
       fs.writeFileSync(dataPath, JSON.stringify(clips, null, 2), "utf-8");
     } catch {
       // Read-only filesystem on Vercel serverless
-    }
-
-    // Delete from Supabase
-    try {
-      await supabase.from("clips").delete().in("id", idsToDelete);
-    } catch (e) {
-      console.warn("Supabase delete error:", e);
     }
 
     return NextResponse.json({ success: true, deletedCount: idsToDelete.length, clips });
