@@ -99,13 +99,17 @@ class ClipperOrchestrator:
         )
 
         v_cfg = config.get("video_compositor", {})
+        banner_cfg = v_cfg.get("hook_banner", {})
+        banner_dur = None if banner_cfg.get("always_visible", True) else banner_cfg.get("duration_sec", 3.5)
+
         self.compositor = VideoCompositor(
             output_dir=config.get("storage", {}).get("output_dir", "./output"),
             cache_dir=config.get("storage", {}).get("cache_dir", "./cache"),
             target_width=v_cfg.get("width", 1080),
             target_height=v_cfg.get("height", 1920),
             facecam_ratio=v_cfg.get("facecam", {}).get("canvas_ratio", 0.35),
-            gameplay_ratio=v_cfg.get("gameplay", {}).get("canvas_ratio", 0.65)
+            gameplay_ratio=v_cfg.get("gameplay", {}).get("canvas_ratio", 0.65),
+            hook_banner_duration=banner_dur
         )
 
         self.facecam_coords = tuple(v_cfg.get("facecam", {}).get("default_box", [0.72, 0.65, 0.28, 0.35]))

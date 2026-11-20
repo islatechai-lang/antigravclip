@@ -27,7 +27,8 @@ class VideoCompositor:
         target_width: int = 1080,
         target_height: int = 1920,
         facecam_ratio: float = 0.35, # Top 35% height for facecam
-        gameplay_ratio: float = 0.65 # Bottom 65% height for gameplay
+        gameplay_ratio: float = 0.65, # Bottom 65% height for gameplay
+        hook_banner_duration: Optional[float] = None # None means stays visible throughout the entire clip
     ):
         self.output_dir = Path(output_dir)
         self.cache_dir = Path(cache_dir)
@@ -36,6 +37,7 @@ class VideoCompositor:
         self.target_height = target_height
         self.facecam_ratio = facecam_ratio
         self.gameplay_ratio = gameplay_ratio
+        self.hook_banner_duration = hook_banner_duration
         self.face_tracker = FaceTracker(cache_dir=cache_dir)
         self.sticker_generator = StickerGenerator(cache_dir=cache_dir)
 
@@ -109,15 +111,16 @@ class VideoCompositor:
         current_video_label = "[stacked]"
 
         # 5. Overlay white sticker pill with authentic color emojis centered on the seam
-        # Displays for the first 3.5 seconds
+        # Stays visible throughout the entire video for consistent context and virality
         extra_inputs = []
         if has_sticker:
             extra_inputs.extend(["-i", str(sticker_png_path)])
             sticker_input_idx = 1
-            filter_parts.append(
-                f"{current_video_label}[{sticker_input_idx}:v]"
-                f"overlay=(W-w)/2:{top_h}-(h/2):enable='between(t,0,3.5)'[with_sticker]"
-            )
+            if self.hook_banner_duration is not None and self.hook_banner_duration > 0:
+                overlay_filter = f"overlay=(W-w)/2:{top_h}-(h/2):enable='between(t,0,{self.hook_banner_duration})'"
+            else:
+                overlay_filter = f"overlay=(W-w)/2:{top_h}-(h/2)"
+            filter_parts.append(f"{current_video_label}[{sticker_input_idx}:v]{overlay_filter}[with_sticker]")
             current_video_label = "[with_sticker]"
 
         # 6. Burn kinetic subtitles if provided
@@ -128,11 +131,12 @@ class VideoCompositor:
 
         filtergraph = ";".join(filter_parts)
 
+        duration = max(1.0, round(decision.clip_end_sec - decision.clip_start_sec, 2))
         cmd = [
             "ffmpeg",
             "-y",
             "-ss", str(decision.clip_start_sec),
-            "-to", str(decision.clip_end_sec),
+            "-t", str(duration),
             "-i", str(source_video),
         ] + extra_inputs + [
             "-filter_complex", filtergraph,
@@ -146,9 +150,9 @@ class VideoCompositor:
             str(output_path)
         ]
 
-        print(f"[VideoCompositor] Rendering 9:16 short ({decision.clip_start_sec:.1f}s -> {decision.clip_end_sec:.1f}s)...")
+        print(f"[VideoCompositor] Rendering 9:16 short ({decision.clip_start_sec:.1f}s -> {decision.clip_end_sec:.1f}s, dur {duration:.1f}s)...")
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
             if res.returncode != 0:
                 print(f"[VideoCompositor] FFmpeg render failed:\n{res.stderr[-600:]}")
                 return None

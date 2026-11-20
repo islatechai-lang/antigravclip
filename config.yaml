@@ -51,7 +51,7 @@ video_compositor:
     words_per_group: 2           # Snappy 2-word high-retention viral subtitle pacing
   hook_banner:
     enabled: true
-    duration_sec: 3.5           # Show hook banner at top of clip for first 3.5 seconds
+    always_visible: true        # Keeps hook title sticker visible throughout the entire clip (viral retention standard)
 
 storage:
   cache_dir: "./cache"
