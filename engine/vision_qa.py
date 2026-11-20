@@ -235,29 +235,30 @@ class VisionQA:
         motion_score = self.check_facecam_activity(frames)
         clip_name = Path(video_path).stem
 
-        # 2. Build base64 frames for Multimodal Vision AI
+        # 2. Build base64 frames for Multimodal Vision AI (High resolution for crisp faces & text)
         b64_frames = []
         for _, frame in frames:
-            resized = cv2.resize(frame, (240, 426))
-            _, buf = cv2.imencode(".jpg", resized, [int(cv2.IMWRITE_JPEG_QUALITY), 65])
+            # 480x854 gives 4x visual clarity over 240x426 for recognizing faces, gameplay, and text
+            resized = cv2.resize(frame, (480, 854))
+            _, buf = cv2.imencode(".jpg", resized, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
             b64_frames.append(base64.b64encode(buf).decode("utf-8"))
 
-        # Vision AI Prompt
-        prompt = f"""You are the Lead Content Director for a viral short-form media company.
-You are inspecting 4 sequential frames from a candidate video of streamer '{channel_name}' playing GTA 6.
-Audio Transcript of this clip: "{transcript_text}"
-Candidate Title: "{candidate_hook}"
+        # Vision AI Prompt - Unbiased, objective stream comprehension
+        prompt = f"""You are the Lead Content Director for a top short-form stream clipping channel.
+You are inspecting sequential video frames from streamer '{channel_name}' live on broadcast.
+Audio Transcript: "{transcript_text}"
+Candidate Hook: "{candidate_hook}"
 
-Evaluate this clip strictly from the perspective of a random viewer scrolling on TikTok/Shorts:
-1. WHAT ACTUALLY HAPPENS? (Explain clearly in 1 sentence what a viewer actually sees occurring on screen).
-2. STREAMER ENGAGEMENT: Is {channel_name} actively reacting (expressive face, shouting, laughing, gasping, talking passionately)? Or is {channel_name} just staring blankly with closed mouth?
-3. VISUAL ACTION: Does a clear, funny, or exciting event happen in the game (car crash, crazy fail, NPC confrontation, clutch, funny bug)? Or is it just mundane driving/walking with nothing happening?
-4. STANDALONE COMPREHENSION: Does this video make complete sense on its own in 3 seconds without needing to know what happened 2 hours earlier on stream?
-5. PREMISE HOOK: Write a short, punchy, premise-driven title (under 7 words with 1-2 authentic emojis, e.g. "Speed tried stealing from the wrong NPC😭" or "Speed crashed the fastest car in GTA 6💀").
+Analyze what is visually and actually happening on screen with precision:
+1. WHAT ACTUALLY HAPPENS? Specifically explain what game, video, or IRL content is on screen and what action occurs (e.g. "Speed gets startled by a loud jumpscare in a horror game", "Streamer misses a penalty shootout in EA FC", "Speed rages after falling off a ledge", "Streamer is laughing at a viewer donation video"). Do NOT guess GTA 6 unless GTA gameplay is clearly visible!
+2. STREAMER ENGAGEMENT: Is {channel_name} actively reacting (expressive face, laughing, gasping, shouting, passionate gestures)? Or staring blankly with closed mouth?
+3. VISUAL ACTION: Does a clear, funny, dramatic, or exciting moment happen on screen?
+4. STANDALONE COMPREHENSION: Does this clip make complete sense to a viewer in 3 seconds?
+5. PREMISE HOOK: Write a viral hook title (under 7 words with 1-2 authentic emojis).
 
 DECISION RULE:
-- If {channel_name} is staring silently with closed mouth at an in-game cutscene, or if nothing interesting happens on screen, REJECT IT ("passed": false, score < 6.0).
-- If there is an active, funny, or crazy moment that makes complete sense, APPROVE IT ("passed": true, score >= 7.0).
+- If {channel_name} is staring silently with closed mouth or nothing interesting happens, REJECT IT ("passed": false, score < 6.0).
+- If there is an entertaining, funny, or high-energy reaction/event that makes sense, APPROVE IT ("passed": true, score >= 7.0).
 
 Respond strictly in valid JSON format:
 {{
@@ -284,8 +285,8 @@ Respond strictly in valid JSON format:
             })
 
         self.vision_models = [
-            "qwen2.5-vl-7b-instruct-awq:free",
-            "qwen2.5-vl-72b-instruct:free"
+            "qwen2.5-vl-72b-instruct:free",
+            "llama-3.2-11b-vision:free"
         ]
 
         for model in self.vision_models:

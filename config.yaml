@@ -16,6 +16,11 @@ stream_buffer:
   slice_post_spike_sec: 25      # Capture 25s after chat spike (streamer reaction)
   stream_quality: "720p60,720p,best"
 
+transcriber:
+  provider: "deepgram"          # "deepgram" (Nova-2 with diarization) or "whisper"
+  model: "nova-2"
+  api_key: "417ca52b3947514ca8cadbfe662fe05b7f6878a0"
+
 ai_director:
   provider: "unorouter"         # "unorouter", "gemini", "openai", or "heuristic"
   model: "gpt-4o:free"
@@ -40,7 +45,8 @@ video_compositor:
     enabled: true
     font: "Impact"              # Standard viral font available on all Windows systems
     font_size: 44
-    highlight_color: "&H0000E5FF" # Vibrant Cyber Gold / Neon Yellow (ASS &HAABBGGRR)
+    highlight_color: "&H0000E5FF" # Vibrant Cyber Gold / Neon Yellow (ASS &HAABBGGRR) for Speaker 0
+    speaker2_color: "&H00FFFF00"  # Electric Cyan for Speaker 1+ (Multi-speaker banter)
     base_color: "&H00FFFFFF"      # Crisp White
     words_per_group: 2           # Snappy 2-word high-retention viral subtitle pacing
   hook_banner:

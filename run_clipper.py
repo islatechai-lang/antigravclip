@@ -11,6 +11,9 @@ import argparse
 import yaml
 import difflib
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 import engine
 from engine.chat_monitor import ChatMonitor, SpikeEvent
@@ -64,15 +67,23 @@ class ClipperOrchestrator:
         self.slice_pre_spike = s_buf.get("slice_pre_spike_sec", 50)
         self.slice_post_spike = s_buf.get("slice_post_spike_sec", 25)
 
-        self.transcriber = Transcriber(model_size="base.en", device="cpu", compute_type="int8")
+        trans_cfg = config.get("transcriber", {})
+        dg_key = os.environ.get("DEEPGRAM_API_KEY") or trans_cfg.get("api_key")
+        self.transcriber = Transcriber(
+            provider=trans_cfg.get("provider", "deepgram"),
+            model_size=trans_cfg.get("model", "nova-2"),
+            device=trans_cfg.get("device", "cpu"),
+            compute_type=trans_cfg.get("compute_type", "int8"),
+            api_key=dg_key
+        )
 
         ai_cfg = config.get("ai_director", {})
         self.ai_director = AIDirector(
             provider=ai_cfg.get("provider", "unorouter"),
-            model_name=ai_cfg.get("model", "deepseek-v4.1-flash-1017:free"),
-            virality_threshold=ai_cfg.get("virality_threshold", 7.0),
-            min_duration_sec=ai_cfg.get("min_clip_duration_sec", 15.0),
-            max_duration_sec=ai_cfg.get("max_clip_duration_sec", 58.0),
+            model_name=ai_cfg.get("model", "gpt-4o:free"),
+            virality_threshold=ai_cfg.get("virality_threshold", 6.0),
+            min_duration_sec=ai_cfg.get("min_clip_duration_sec", 14.0),
+            max_duration_sec=ai_cfg.get("max_clip_duration_sec", 50.0),
             api_key=ai_cfg.get("api_key"),
             api_base_url=ai_cfg.get("api_base_url")
         )
@@ -83,6 +94,7 @@ class ClipperOrchestrator:
             font_size=sub_cfg.get("font_size", 44),
             primary_color=sub_cfg.get("base_color", "&H00FFFFFF"),
             highlight_color=sub_cfg.get("highlight_color", "&H0000E5FF"),
+            speaker2_color=sub_cfg.get("speaker2_color", "&H00FFFF00"),
             words_per_group=sub_cfg.get("words_per_group", 2)
         )
 

@@ -192,12 +192,22 @@ class AIDirector:
         chat_emotes: List[str],
         channel_name: str
     ) -> str:
+        # Build human-readable diarized dialogue
+        diarized_lines = []
+        for seg in transcript.segments:
+            spk_label = f"Speaker {seg.speaker}" if transcript.has_multiple_speakers() else channel_name
+            diarized_lines.append(f"[{spk_label} | {seg.start:.1f}s -> {seg.end:.1f}s]: \"{seg.text}\"")
+        diarized_transcript = "\n".join(diarized_lines) if diarized_lines else transcript.full_text
+
         transcript_json = json.dumps(transcript.to_dict(), indent=2)
         return f"""You are the lead viral editor for a top short-form clipping channel (TikTok, YouTube Shorts, Instagram Reels).
 A live stream from '{channel_name}' had a massive chat velocity reaction spike around {spike_offset:.1f}s.
 Chat reaction emotes: {', '.join(chat_emotes)}
 
-AUDIO TRANSCRIPT WITH TIMESTAMPS:
+DIARIZED CONVERSATION TRANSCRIPT:
+{diarized_transcript}
+
+FULL AUDIO TRANSCRIPT WITH TIMESTAMPS:
 {transcript_json}
 
 ============================================================
@@ -206,11 +216,12 @@ HOW TO EDIT THIS CLIP FOR MAXIMUM SHORT-FORM VIRALITY:
 
 1. WHAT MAKES A CLIP VIRAL FOR {channel_name}:
    - HIGH ENERGY REACTIONS: Screaming, sudden shock, laughing hysterically, repeating something in disbelief (e.g. "WHAT IS THIS BRO?!"), raging, barking, or reacting with pure emotion. THESE ARE HIGH-VALUE VIRAL MOMENTS (Score 7.5 - 9.5)!
-   - GTA 6 MOMENTS: Funny car crashes, hilarious NPC encounters, police chases, mission fails, or unexpected game physics.
+   - MULTI-SPEAKER BANTER / ARGUMENTS: If Speaker 0 ({channel_name}) and Speaker 1 (friend, Discord caller, guest, or co-streamer) are arguing, screaming, bantering, roasting each other, or reacting together, THIS IS VIRAL GOLD! Keep both sides of the dialogue.
    - CHAT INTERACTIONS: Streamer roasting chat, answering a ridiculous question, or chat trolling the streamer.
 
 2. SPEAKER ATTRIBUTION (CRITICAL):
-   - The audio has {channel_name} on their mic AND in-game sound (game NPCs, story cutscenes).
+   - Speaker 0 is usually {channel_name} on their primary microphone.
+   - Speaker 1+ is another person (friend on Discord, co-streamer, or in-game player).
    - NEVER attribute an NPC's voice or line to {channel_name}.
    - If the moment is ONLY an in-game cutscene where {channel_name} stays quiet and has NO reaction, reject it: "passed_filter": false, "virality_score": 4.0.
    - If {channel_name} is actively reacting, talking, shouting, or laughing, ACCEPT IT: "passed_filter": true!
