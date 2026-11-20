@@ -170,6 +170,20 @@ def clear_logs():
     return {"status": "cleared"}
 
 
+@app.delete("/api/clips/all")
+def delete_all_clips():
+    clip_store.delete_all()
+    log_manager.add("[ClipStore] 🗑️ All clips and metadata cleared.", source="ClipStore", level="info")
+    return {"status": "all_clips_deleted"}
+
+
+@app.delete("/api/clips/{clip_id}")
+def delete_single_clip(clip_id: str):
+    clip_store.delete_clip(clip_id)
+    log_manager.add(f"[ClipStore] 🗑️ Clip {clip_id} deleted.", source="ClipStore", level="info")
+    return {"status": "clip_deleted", "id": clip_id}
+
+
 def _run_clipper_loop(config: dict, channel: str, platform: str):
     try:
         state.orchestrator = ClipperOrchestrator(config, channel_override=channel, platform_override=platform)
@@ -334,6 +348,19 @@ def _supabase_bridge_loop():
                                 f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
                                 headers=headers,
                                 json={"status": "stopped", "caption": str(int(time.time()))},
+                                timeout=5
+                            )
+                        except Exception:
+                            pass
+                    elif cmd == "clear_all":
+                        print(f"[Cloud Bridge] 🗑️ Received CLEAR_ALL command from Vercel!")
+                        log_manager.add("[Bridge] 🗑️ Clearing all clips and resetting metadata...", source="Bridge", level="info")
+                        clip_store.delete_all()
+                        try:
+                            session.patch(
+                                f"{supabase_url}/rest/v1/clips?id=eq.sys_worker_control",
+                                headers=headers,
+                                json={"status": "running" if state.is_running else "stopped", "caption": str(int(time.time()))},
                                 timeout=5
                             )
                         except Exception:

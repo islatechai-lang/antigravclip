@@ -10,16 +10,18 @@ export const revalidate = 0;
 export async function GET() {
   try {
     let clips: any[] = [];
+    let supabaseLoaded = false;
 
     // 1. Try querying Supabase Database
     try {
       const { data, error } = await supabase
         .from("clips")
         .select("*")
-        .neq("status", "deleted")
         .order("virality_score", { ascending: false });
 
-      if (!error && data) {
+      if (!error && Array.isArray(data)) {
+        supabaseLoaded = true;
+        // Supabase is active: filter out deleted, test, and system rows
         clips = data.filter((c: any) => 
           c.status !== "deleted" && 
           !c.id.startsWith("test_") && 
@@ -30,8 +32,8 @@ export async function GET() {
       console.warn("Supabase query fallback to local/bundled clips:", e);
     }
 
-    // 2. Fallback to local data/clips.json if Supabase is empty or table not created yet
-    if (clips.length === 0) {
+    // 2. ONLY fallback to local data/clips.json if Supabase connection failed entirely
+    if (!supabaseLoaded) {
       const dataPath = path.join(process.cwd(), "data", "clips.json");
       if (fs.existsSync(dataPath)) {
         try {
@@ -43,7 +45,7 @@ export async function GET() {
       } else {
         clips = clipsFallback as any[];
       }
-      clips = (clips || []).filter((c: any) => c.status !== "deleted" && !c.id.startsWith("test_"));
+      clips = (clips || []).filter((c: any) => c.status !== "deleted" && !c.id.startsWith("test_") && !c.id.startsWith("sys_"));
     }
 
     // Ensure every clip has a valid public video_url for cloud playback & Buffer
@@ -68,6 +70,30 @@ export async function GET() {
     return NextResponse.json({ clips, stats });
   } catch (error: any) {
     console.error("Failed to load clips:", error);
-    return NextResponse.json({ clips: clipsFallback, stats: { total: clipsFallback.length, pending: clipsFallback.length, posted: 0, declined: 0, avgVirality: "8.5" } });
+    return NextResponse.json({ clips: [], stats: { total: 0, pending: 0, posted: 0, declined: 0, avgVirality: "0.0" } });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const clipId = url.searchParams.get("id");
+    const all = url.searchParams.get("all") === "true";
+
+    if (all) {
+      await supabase.from("clips").update({ status: "deleted" }).not("id", "like", "sys_%");
+      await supabase.from("clips").delete().not("id", "like", "sys_%");
+      return NextResponse.json({ success: true, count: 0, clips: [] });
+    }
+
+    if (clipId) {
+      await supabase.from("clips").update({ status: "deleted" }).eq("id", clipId);
+      await supabase.from("clips").delete().eq("id", clipId);
+      return NextResponse.json({ success: true, deletedCount: 1 });
+    }
+
+    return NextResponse.json({ error: "No clip id or all flag provided" }, { status: 400 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

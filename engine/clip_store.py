@@ -60,6 +60,10 @@ class ClipStore:
             except Exception:
                 continue
 
+            # Skip deleted clips so they are never resurrected!
+            if meta.get("status") == "deleted":
+                continue
+
             file_name = meta.get("file", os.path.basename(mf).replace(".json", ".mp4"))
             clip_id = Path(file_name).stem
 
@@ -193,3 +197,36 @@ class ClipStore:
         if target:
             self._save_db(clips)
         return target
+
+    def delete_clip(self, clip_id: str) -> bool:
+        """Deletes a clip locally and marks its metadata as deleted to prevent resurrection."""
+        clips = self._load_db()
+        updated = [c for c in clips if c.get("id") != clip_id]
+        self._save_db(updated)
+
+        meta_file = self.metadata_dir / f"{clip_id}.json"
+        if meta_file.exists():
+            try:
+                with open(meta_file, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+                meta["status"] = "deleted"
+                with open(meta_file, "w", encoding="utf-8") as f:
+                    json.dump(meta, f, indent=2)
+            except Exception:
+                pass
+        return True
+
+    def delete_all(self) -> bool:
+        """Wipes clips database and marks all metadata files as deleted for a clean slate."""
+        self._save_db([])
+        meta_files = glob.glob(str(self.metadata_dir / "*.json"))
+        for mf in meta_files:
+            try:
+                with open(mf, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+                meta["status"] = "deleted"
+                with open(mf, "w", encoding="utf-8") as f:
+                    json.dump(meta, f, indent=2)
+            except Exception:
+                pass
+        return True
