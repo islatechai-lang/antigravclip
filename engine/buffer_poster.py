@@ -133,7 +133,7 @@ class BufferPoster:
             post_input: Dict[str, Any] = {
                 "channelId": ch_id,
                 "text": full_text,
-                "mode": "addToQueue",
+                "mode": "shareNow",
                 "saveToDraft": as_draft,
                 "schedulingType": "automatic",
                 "needsApproval": False,
@@ -152,12 +152,38 @@ class BufferPoster:
                     typename = data.get("__typename")
                     if typename == "PostActionSuccess":
                         post_info = data.get("post", {})
+                        post_id = post_info.get("id")
+                        status = post_info.get("status")
+
+                        # Trigger immediate dispatch
+                        if post_id and not as_draft:
+                            try:
+                                pub_mut = """
+                                mutation PublishNow($input: PublishPostNowInput!) {
+                                  publishPostNow(input: $input) {
+                                    __typename
+                                    ... on PostActionSuccess {
+                                      post { id status }
+                                    }
+                                  }
+                                }
+                                """
+                                self.session.post(
+                                    self.api_url,
+                                    headers=self.headers,
+                                    json={"query": pub_mut, "variables": {"input": {"id": post_id}}},
+                                    timeout=10
+                                )
+                                status = "sending"
+                            except Exception:
+                                pass
+
                         results[ch_id] = {
                             "success": True,
-                            "post_id": post_info.get("id"),
-                            "status": post_info.get("status")
+                            "post_id": post_id,
+                            "status": status
                         }
-                        print(f"✅ [BufferPoster] Posted to channel {ch_id}: Post ID {post_info.get('id')} ({post_info.get('status')})")
+                        print(f"✅ [BufferPoster] Posted to channel {ch_id}: Post ID {post_id} ({status})")
                     else:
                         err_msg = data.get("message", typename)
                         results[ch_id] = {"success": False, "error": err_msg}

@@ -121,7 +121,7 @@ export async function POST(req: Request) {
       const inputPayload: any = {
         channelId,
         text: fullText,
-        mode: "addToQueue",
+        mode: "shareNow",
         saveToDraft: false,
         schedulingType: "automatic",
         needsApproval: false,
@@ -148,10 +148,52 @@ export async function POST(req: Request) {
           const createPostData = resData?.data?.createPost;
           if (createPostData?.__typename === "PostActionSuccess") {
             atLeastOneSuccess = true;
+            const postId = createPostData.post?.id;
+            let currentStatus = createPostData.post?.status;
+
+            // Trigger publishPostNow immediately to guarantee instant dispatch to TikTok/YouTube/Facebook
+            if (postId) {
+              try {
+                const pubResp = await fetch("https://api.buffer.com", {
+                  method: "POST",
+                  headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+                  },
+                  body: JSON.stringify({
+                    query: `
+                      mutation PublishNow($input: PublishPostNowInput!) {
+                        publishPostNow(input: $input) {
+                          __typename
+                          ... on PostActionSuccess {
+                            post {
+                              id
+                              status
+                            }
+                          }
+                        }
+                      }
+                    `,
+                    variables: { input: { id: postId } }
+                  })
+                });
+                if (pubResp.ok) {
+                  const pubData = await pubResp.json();
+                  const pubPost = pubData?.data?.publishPostNow?.post;
+                  if (pubPost?.status) {
+                    currentStatus = pubPost.status;
+                  }
+                }
+              } catch (pubErr) {
+                console.warn(`[API /approve] publishPostNow warning for ${postId}:`, pubErr);
+              }
+            }
+
             postResults[channelId] = {
               success: true,
-              postId: createPostData.post?.id,
-              status: createPostData.post?.status
+              postId: postId,
+              status: currentStatus
             };
           } else {
             postResults[channelId] = {
