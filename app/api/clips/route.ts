@@ -20,7 +20,11 @@ export async function GET() {
         .order("virality_score", { ascending: false });
 
       if (!error && data) {
-        clips = data.filter((c: any) => c.status !== "deleted" && !c.id.startsWith("test_"));
+        clips = data.filter((c: any) => 
+          c.status !== "deleted" && 
+          !c.id.startsWith("test_") && 
+          !c.id.startsWith("sys_")
+        );
       }
     } catch (e) {
       console.warn("Supabase query fallback to local/bundled clips:", e);
