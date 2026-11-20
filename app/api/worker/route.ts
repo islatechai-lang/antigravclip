@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   const backendUrl = process.env.BACKEND_API_URL;
   if (backendUrl && !backendUrl.includes("127.0.0.1") && !backendUrl.includes("localhost")) {

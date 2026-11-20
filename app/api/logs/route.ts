@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(req: Request) {
   const backendUrl = process.env.BACKEND_API_URL;
   if (backendUrl && !backendUrl.includes("127.0.0.1") && !backendUrl.includes("localhost")) {

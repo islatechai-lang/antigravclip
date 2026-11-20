@@ -146,7 +146,7 @@ class ClipStore:
             "what_happens": clip.get("what_happens", ""),
             "status": clip.get("status", "pending"),
             "video_url": clip.get("video_url"),
-            "storyboard_path": clip.get("storyboard_path")
+            "storyboard_url": f"/api/storyboard/{clip['id']}"
         }
 
         try:
