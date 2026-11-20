@@ -1,0 +1,18 @@
+{
+  "file": "clip_ishowspeed_1795149925.mp4",
+  "channel": "ishowspeed",
+  "hook_title": "Speed is ready to fight\ud83d\udca5",
+  "caption": "When you think you\u2019re tough but really\u2026\ud83d\ude05 #IShowSpeed #FunnyMoments #Gaming",
+  "virality_score": 8.5,
+  "reasoning": "High energy reaction from IShowSpeed with engaging dialogue and chat interactions. The audio includes emotional peaks and humor, making it suitable for a viral clip.",
+  "duration_seconds": 14.0,
+  "created_at": "2026-11-20 12:45:52",
+  "vision_qa": {
+    "passed": true,
+    "comprehension_score": 7.5,
+    "what_actually_happens": "Streamer engagement verified via facecam activity tracking.",
+    "premise_hook": "Speed is ready to fight\ud83d\udca5",
+    "rejection_reason": null,
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795149853.jpg"
+  }
+}

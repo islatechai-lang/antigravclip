@@ -431,7 +431,7 @@ export default function Dashboard() {
                         </div>
 
                         <video
-                          src={`/api/video/${clip.id}`}
+                          src={clip.video_url || `/api/video/${clip.id}`}
                           controls
                           playsInline
                           preload="metadata"
