@@ -17,12 +17,14 @@ class StreamBuffer:
     def __init__(
         self,
         channel: str,
+        platform: str = "twitch",
         cache_dir: str = "./cache",
         buffer_duration_sec: int = 300,
         segment_time_sec: int = 4,
         stream_quality: str = "720p60,720p,best"
     ):
         self.channel = channel.lower().lstrip("#")
+        self.platform = platform.lower()
         self.cache_dir = Path(cache_dir)
         self.buffer_dir = self.cache_dir / f"buffer_{self.channel}"
         self.buffer_duration_sec = buffer_duration_sec
@@ -38,7 +40,7 @@ class StreamBuffer:
     def get_channel_url(self) -> str:
         """Constructs target live stream URL."""
         clean_name = self.channel.lstrip("@").lower()
-        if "youtube" in clean_name or clean_name == "ishowspeed":
+        if self.platform == "youtube" or "youtube" in clean_name or clean_name == "ishowspeed":
             return f"https://www.youtube.com/@{clean_name}/live"
         return f"https://twitch.tv/{clean_name}"
 

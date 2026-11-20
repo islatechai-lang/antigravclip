@@ -13,8 +13,10 @@ cache/
 *.ass
 *.tmp
 
-# Large video output binaries (prevent GitHub 100MB file limit)
+# Large video output binaries & storyboards (prevent GitHub limits)
 output/*.mp4
+output/storyboards/
+output/metadata/
 
 # Python
 __pycache__/

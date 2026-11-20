@@ -32,15 +32,20 @@ def load_config(config_path: str = "config.yaml") -> dict:
 
 
 class ClipperOrchestrator:
-    def __init__(self, config: dict, channel_override: str = None):
+    def __init__(self, config: dict, channel_override: str = None, platform_override: str = None):
         self.config = config
         self.channel = (channel_override or config.get("target", {}).get("channel", "tarik")).lower().lstrip("#")
+        
+        target_platform = platform_override or config.get("target", {}).get("platform")
+        if not target_platform:
+            target_platform = "youtube" if self.channel == "ishowspeed" or self.channel.startswith("@") else "twitch"
+        self.platform = target_platform
         
         # Initialize modules
         c_mon = config.get("chat_monitor", {})
         self.chat_monitor = ChatMonitor(
             channel=self.channel,
-            platform="youtube" if self.channel == "ishowspeed" or self.channel.startswith("@") else "twitch",
+            platform=self.platform,
             baseline_window_sec=c_mon.get("baseline_window_sec", 60),
             sample_interval_sec=c_mon.get("sample_interval_sec", 2.0),
             spike_multiplier=c_mon.get("spike_std_multiplier", 2.8),
@@ -52,6 +57,7 @@ class ClipperOrchestrator:
         s_buf = config.get("stream_buffer", {})
         self.stream_buffer = StreamBuffer(
             channel=self.channel,
+            platform=self.platform,
             cache_dir=config.get("storage", {}).get("cache_dir", "./cache"),
             buffer_duration_sec=s_buf.get("buffer_duration_sec", 300),
             stream_quality=s_buf.get("stream_quality", "720p60,720p,best")

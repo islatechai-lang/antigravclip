@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Play, 
+  Pause,
   CheckCircle, 
   XCircle, 
   Share2, 
@@ -16,7 +17,10 @@ import {
   Sparkles,
   ExternalLink,
   SlidersHorizontal,
-  AlertCircle
+  AlertCircle,
+  Radio,
+  Zap,
+  Square
 } from "lucide-react";
 
 interface ClipItem {
@@ -53,6 +57,30 @@ export default function Dashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
+
+  // Cloud Worker Controller State
+  const [workerStatus, setWorkerStatus] = useState<{
+    is_running: boolean;
+    channel: string;
+    platform: string;
+    uptime_seconds?: number;
+  }>({
+    is_running: true,
+    channel: "ishowspeed",
+    platform: "youtube"
+  });
+  const [streamerHandle, setStreamerHandle] = useState<string>("ishowspeed");
+  const [streamerPlatform, setStreamerPlatform] = useState<"twitch" | "youtube">("youtube");
+  const [workerLoading, setWorkerLoading] = useState<boolean>(false);
+
+  const popularPresets = [
+    { name: "IShowSpeed", channel: "ishowspeed", platform: "youtube" as const, icon: "🔴" },
+    { name: "Tarik", channel: "tarik", platform: "twitch" as const, icon: "🟣" },
+    { name: "Kai Cenat", channel: "kaicenat", platform: "twitch" as const, icon: "🟣" },
+    { name: "Jynxzi", channel: "jynxzi", platform: "twitch" as const, icon: "🟣" },
+    { name: "xQc", channel: "xqc", platform: "twitch" as const, icon: "🟣" },
+  ];
+
 
   // Per-clip editing state
   const [editCaptions, setEditCaptions] = useState<Record<string, string>>({});
@@ -95,9 +123,92 @@ export default function Dashboard() {
     }
   };
 
+  const fetchWorkerStatus = async () => {
+    try {
+      const res = await fetch("/api/worker");
+      if (res.ok) {
+        const data = await res.json();
+        setWorkerStatus(data);
+        if (data.channel && data.channel !== "offline") {
+          setStreamerHandle(data.channel);
+          if (data.platform) setStreamerPlatform(data.platform);
+        }
+      }
+    } catch (err) {
+      // offline fallback
+    }
+  };
+
+  const handleStartWorker = async (targetChannel?: string, targetPlatform?: "twitch" | "youtube") => {
+    const channelToUse = (targetChannel || streamerHandle).trim().replace(/^[@#]/, "");
+    const platformToUse = targetPlatform || streamerPlatform;
+    if (!channelToUse) {
+      showToast("error", "Please enter a streamer channel handle.");
+      return;
+    }
+
+    setWorkerLoading(true);
+    showToast("info", `Connecting autonomous clipper to @${channelToUse} (${platformToUse})...`);
+
+    try {
+      const res = await fetch("/api/worker", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "start",
+          channel: channelToUse,
+          platform: platformToUse
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setWorkerStatus({
+          is_running: true,
+          channel: channelToUse,
+          platform: platformToUse
+        });
+        showToast("success", `🚀 Autonomous clipper is now LIVE on @${channelToUse}!`);
+      } else {
+        showToast("error", `Failed to start clipper: ${data.error || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      showToast("error", `Worker network error: ${err.message}`);
+    } finally {
+      setWorkerLoading(false);
+    }
+  };
+
+  const handleStopWorker = async () => {
+    setWorkerLoading(true);
+    showToast("info", "Pausing autonomous stream clipper...");
+
+    try {
+      const res = await fetch("/api/worker", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "stop" })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setWorkerStatus(prev => ({ ...prev, is_running: false }));
+        showToast("info", "⏸️ Clipper paused. You can resume or switch streamers anytime!");
+      } else {
+        showToast("error", `Failed to stop clipper: ${data.error || "Unknown error"}`);
+      }
+    } catch (err: any) {
+      showToast("error", `Worker network error: ${err.message}`);
+    } finally {
+      setWorkerLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchClips();
-    const interval = setInterval(fetchClips, 20000);
+    fetchWorkerStatus();
+    const interval = setInterval(() => {
+      fetchClips();
+      fetchWorkerStatus();
+    }, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -266,6 +377,139 @@ export default function Dashboard() {
 
       {/* Main Body */}
       <main className="max-w-7xl mx-auto px-8 pt-8">
+        {/* Streamer Target & Cloud Worker Console */}
+        <div className="bg-[#0f1422] border border-slate-800/90 rounded-2xl p-5 mb-8 shadow-xl shadow-black/40">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-400">
+                <Radio className={`w-5 h-5 ${workerStatus.is_running ? "animate-pulse text-emerald-400" : "text-slate-500"}`} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-black text-white">Live Clipper Streamer Control</h2>
+                  {workerStatus.is_running ? (
+                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      MONITORING: @{workerStatus.channel} ({workerStatus.platform?.toUpperCase()})
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      STANDBY / PAUSED
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5 font-medium">
+                  Paste any Twitch or YouTube handle to switch active live clipping dynamically in the cloud.
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1">Presets:</span>
+              {popularPresets.map(preset => (
+                <button
+                  key={preset.channel}
+                  type="button"
+                  onClick={() => {
+                    setStreamerHandle(preset.channel);
+                    setStreamerPlatform(preset.platform);
+                    handleStartWorker(preset.channel, preset.platform);
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition flex items-center gap-1.5 ${
+                    workerStatus.channel.toLowerCase() === preset.channel.toLowerCase()
+                      ? "bg-purple-600/30 border-purple-500 text-purple-200"
+                      : "bg-[#090d16] border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                  }`}
+                >
+                  <span>{preset.icon}</span>
+                  <span>{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Input & Action Bar */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-4">
+            {/* Platform selector */}
+            <div className="flex items-center bg-[#090d16] border border-slate-800 rounded-xl p-1 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setStreamerPlatform("twitch")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition flex-1 sm:flex-initial ${
+                  streamerPlatform === "twitch"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                🟣 Twitch
+              </button>
+              <button
+                type="button"
+                onClick={() => setStreamerPlatform("youtube")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition flex-1 sm:flex-initial ${
+                  streamerPlatform === "youtube"
+                    ? "bg-red-600 text-white shadow-md shadow-red-600/30"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                🔴 YouTube
+              </button>
+            </div>
+
+            {/* Handle input */}
+            <div className="relative flex-1 w-full">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-xs">@</span>
+              <input
+                type="text"
+                value={streamerHandle}
+                onChange={(e) => setStreamerHandle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleStartWorker();
+                  }
+                }}
+                placeholder="Enter streamer handle (e.g. tarik, kaicenat, ishowspeed, jynxzi)..."
+                className="w-full bg-[#090d16] border border-slate-800 rounded-xl pl-8 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 font-medium tracking-wide placeholder-slate-600"
+              />
+            </div>
+
+            {/* Start / Update Button */}
+            <button
+              type="button"
+              disabled={workerLoading}
+              onClick={() => handleStartWorker()}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-lg shadow-purple-600/25 transition disabled:opacity-50"
+            >
+              {workerLoading ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Play className="w-3.5 h-3.5 fill-white" />
+              )}
+              {workerStatus.is_running && workerStatus.channel.toLowerCase() === streamerHandle.trim().toLowerCase()
+                ? "Restart Clipper"
+                : workerStatus.is_running
+                ? "Switch Streamer"
+                : "Start Autonomous Clipper"}
+            </button>
+
+            {/* Pause / Stop Button */}
+            {workerStatus.is_running && (
+              <button
+                type="button"
+                disabled={workerLoading}
+                onClick={handleStopWorker}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition disabled:opacity-50"
+              >
+                <Pause className="w-3.5 h-3.5" />
+                Pause
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* KPI Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-[#0f1422] border border-slate-800/80 rounded-2xl p-5 shadow-lg shadow-black/40">
