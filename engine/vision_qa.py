@@ -58,7 +58,7 @@ class VisionQA:
         min_comprehension_score: float = 6.0,
         storyboards_dir: str = "./output/storyboards"
     ):
-        self.api_key = api_key or os.environ.get("UNOROUTER_API_KEY", "sk-UE7RO864vd28guRe8sGAp3W6HfsiZgG3ktSNwlZHrNH9k21C")
+        self.api_key = api_key or os.environ.get("UNOROUTER_API_KEY", "")
         self.api_base_url = api_base_url
         self.min_comprehension_score = min_comprehension_score
         self.storyboards_dir = Path(storyboards_dir)

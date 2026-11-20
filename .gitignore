@@ -9,7 +9,8 @@ out/
 
 # Stream video cache & temp slices
 cache/
-*.ts
+cache/*.ts
+output/*.ts
 *.ass
 *.tmp
 

@@ -47,7 +47,7 @@ class StartClipperRequest(BaseModel):
     platform: Optional[str] = "twitch" # "twitch" or "youtube"
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"status": "online", "service": "AntigravClip Cloud Engine"}
 
