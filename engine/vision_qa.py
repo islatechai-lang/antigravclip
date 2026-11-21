@@ -20,6 +20,7 @@ from typing import List, Tuple, Optional, Dict, Any
 from PIL import Image, ImageDraw, ImageFont
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+from engine.face_tracker import FaceTracker
 
 
 class VisionQAResult:
@@ -63,6 +64,7 @@ class VisionQA:
         self.min_comprehension_score = min_comprehension_score
         self.storyboards_dir = Path(storyboards_dir)
         self.storyboards_dir.mkdir(parents=True, exist_ok=True)
+        self.face_tracker = FaceTracker()
 
     def extract_storyboard_frames(
         self,
@@ -231,8 +233,9 @@ class VisionQA:
                 premise_hook=candidate_hook
             )
 
-        # 1. Check facecam activity (detects if streamer was just sitting silently)
-        motion_score = self.check_facecam_activity(frames)
+        # 1. Check facecam activity on the actual streamer's facecam box
+        facecam_box = self.face_tracker.detect_facecam_box(video_path, channel_name=channel_name)
+        motion_score = self.check_facecam_activity(frames, facecam_box=facecam_box)
         clip_name = Path(video_path).stem
 
         # 2. Build base64 frames for Multimodal Vision AI (High resolution for crisp faces & text)
