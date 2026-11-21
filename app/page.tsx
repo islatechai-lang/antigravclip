@@ -217,19 +217,39 @@ export default function Dashboard() {
         setClips(data.clips || []);
         setStats(data.stats || { total: 0, pending: 0, posted: 0, declined: 0, avgVirality: "0.0" });
 
-        const initialCaptions: Record<string, string> = {};
-        const initialTags: Record<string, string[]> = {};
-        const initialChans: Record<string, string[]> = {};
+        // Retrieve user's channel defaults from localStorage if present
+        let defaultChans = availableChannels.map(ch => ch.id);
+        try {
+          const saved = localStorage.getItem("antigrav_default_channels");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) defaultChans = parsed;
+          }
+        } catch {}
 
-        (data.clips || []).forEach((c: ClipItem) => {
-          initialCaptions[c.id] = c.caption;
-          initialTags[c.id] = c.hashtags || ["#gta6", "#gaming", "#shorts", "#viral", "#fyp"];
-          initialChans[c.id] = availableChannels.map(ch => ch.id);
+        setEditCaptions(prev => {
+          const next = { ...prev };
+          (data.clips || []).forEach((c: ClipItem) => {
+            if (next[c.id] === undefined) next[c.id] = c.caption;
+          });
+          return next;
         });
 
-        setEditCaptions(initialCaptions);
-        setEditHashtags(initialTags);
-        setSelectedChannels(initialChans);
+        setEditHashtags(prev => {
+          const next = { ...prev };
+          (data.clips || []).forEach((c: ClipItem) => {
+            if (next[c.id] === undefined) next[c.id] = c.hashtags || ["#gta6", "#gaming", "#shorts", "#viral", "#fyp"];
+          });
+          return next;
+        });
+
+        setSelectedChannels(prev => {
+          const next = { ...prev };
+          (data.clips || []).forEach((c: ClipItem) => {
+            if (next[c.id] === undefined) next[c.id] = defaultChans;
+          });
+          return next;
+        });
       }
     } catch (err) {
       console.error("Error fetching clips:", err);
@@ -364,8 +384,20 @@ export default function Dashboard() {
       const clipId = approvalQueueRef.current[0];
       const targetClip = clips.find(c => c.id === clipId);
 
-      showToast("info", `🚀 Uploading & posting "${targetClip?.hook_title || clipId}" to Buffer...`);
-      logAction(`🎯 [Queue] Processing clip "${targetClip?.hook_title || clipId}". Initiating Buffer dispatch...`, "info", "UserAction");
+      const targetChannels = selectedChannels[clipId] !== undefined ? selectedChannels[clipId] : availableChannels.map(ch => ch.id);
+      if (!targetChannels || targetChannels.length === 0) {
+        showToast("error", `⚠️ No social channels enabled for "${targetClip?.hook_title || clipId}". Post skipped.`);
+        approvalQueueRef.current = approvalQueueRef.current.filter(id => id !== clipId);
+        setApprovingClipIds([...approvalQueueRef.current]);
+        continue;
+      }
+
+      const chanNames = targetChannels
+        .map((cid: string) => availableChannels.find(ch => ch.id === cid)?.platform || cid)
+        .join(", ");
+
+      showToast("info", `🚀 Uploading & posting "${targetClip?.hook_title || clipId}" to Buffer (${chanNames})...`);
+      logAction(`🎯 [Queue] Processing clip "${targetClip?.hook_title || clipId}". Initiating Buffer dispatch for [${chanNames}]...`, "info", "UserAction");
 
       try {
         const res = await fetch("/api/approve", {
@@ -375,7 +407,7 @@ export default function Dashboard() {
             clipId,
             caption: editCaptions[clipId],
             hashtags: editHashtags[clipId],
-            channelIds: selectedChannels[clipId]
+            channelIds: targetChannels
           })
         });
 
@@ -387,8 +419,11 @@ export default function Dashboard() {
           if (activePreviewClip && activePreviewClip.id === clipId) {
             setActivePreviewClip(prev => prev ? { ...prev, status: "posted", video_url: resData.videoUrl } : null);
           }
-          showToast("success", `🎉 Successfully posted "${targetClip?.hook_title || clipId}" to Buffer!`);
-          logAction(`✅ [Buffer Success] Published "${targetClip?.hook_title || clipId}" on TikTok, YouTube Shorts & Facebook Reels!`, "success", "Buffer");
+          const postedNames = (resData.channelsPosted || targetChannels)
+            .map((cid: string) => availableChannels.find(ch => ch.id === cid)?.platform || cid)
+            .join(", ");
+          showToast("success", `🎉 Successfully posted "${targetClip?.hook_title || clipId}" to Buffer (${postedNames})!`);
+          logAction(`✅ [Buffer Success] Published "${targetClip?.hook_title || clipId}" to [${postedNames}]!`, "success", "Buffer");
         } else {
           const errMsg = resData.error || "Buffer rejected the post request.";
           showToast("error", `❌ Buffer Error for "${targetClip?.hook_title || clipId}": ${errMsg}`);
@@ -408,6 +443,12 @@ export default function Dashboard() {
   };
 
   const handleApprove = (clipId: string) => {
+    const chans = selectedChannels[clipId] !== undefined ? selectedChannels[clipId] : availableChannels.map(ch => ch.id);
+    if (!chans || chans.length === 0) {
+      showToast("error", "⚠️ Please enable at least one target social channel before approving.");
+      return;
+    }
+
     if (approvalQueueRef.current.includes(clipId)) {
       showToast("info", "Clip is already in the approval queue!");
       return;
@@ -425,11 +466,12 @@ export default function Dashboard() {
   const handleApproveSelected = () => {
     const pendingSelected = selectedClipIds.filter(id => {
       const clip = clips.find(c => c.id === id);
-      return clip && clip.status === "pending" && !approvalQueueRef.current.includes(id);
+      const chans = selectedChannels[id] !== undefined ? selectedChannels[id] : availableChannels.map(ch => ch.id);
+      return clip && clip.status === "pending" && !approvalQueueRef.current.includes(id) && chans.length > 0;
     });
 
     if (pendingSelected.length === 0) {
-      showToast("info", "No pending clips selected to approve.");
+      showToast("info", "No pending clips with active channels selected to approve.");
       return;
     }
 
@@ -587,12 +629,19 @@ export default function Dashboard() {
 
   const toggleChannel = (clipId: string, channelId: string) => {
     setSelectedChannels(prev => {
-      const current = prev[clipId] || [];
+      const current = prev[clipId] !== undefined ? prev[clipId] : availableChannels.map(ch => ch.id);
+      let updated: string[];
       if (current.includes(channelId)) {
-        return { ...prev, [clipId]: current.filter(id => id !== channelId) };
+        updated = current.filter(id => id !== channelId);
       } else {
-        return { ...prev, [clipId]: [...current, channelId] };
+        updated = [...current, channelId];
       }
+
+      try {
+        localStorage.setItem("antigrav_default_channels", JSON.stringify(updated));
+      } catch {}
+
+      return { ...prev, [clipId]: updated };
     });
   };
 
@@ -736,6 +785,51 @@ export default function Dashboard() {
                         {tag}
                       </span>
                     ))}
+                  </div>
+                </div>
+
+                {/* Target Social Channels Toggles in Modal */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Target Social Channels
+                    </label>
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      {(selectedChannels[activePreviewClip.id] !== undefined ? selectedChannels[activePreviewClip.id] : availableChannels.map(ch => ch.id)).length} of {availableChannels.length} active
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {availableChannels.map((ch) => {
+                      const modalChannels = selectedChannels[activePreviewClip.id] !== undefined
+                        ? selectedChannels[activePreviewClip.id]
+                        : availableChannels.map(c => c.id);
+                      const isSelected = modalChannels.includes(ch.id);
+                      return (
+                        <button
+                          key={ch.id}
+                          type="button"
+                          onClick={() => toggleChannel(activePreviewClip.id, ch.id)}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                            isSelected
+                              ? "bg-purple-600/25 border-purple-400 text-purple-200 shadow-sm shadow-purple-600/20"
+                              : "bg-[#090d16] border-slate-800 text-slate-500 hover:text-slate-300 opacity-60 hover:opacity-100"
+                          }`}
+                        >
+                          <span className="text-sm">{ch.icon}</span>
+                          <span>{ch.platform}</span>
+                          <span className="text-[10px] text-slate-500 font-normal">(@{ch.name})</span>
+                          {isSelected ? (
+                            <span className="ml-1 text-[9px] font-black uppercase tracking-wider bg-purple-500/30 text-purple-300 px-1.5 py-0.5 rounded border border-purple-500/40">
+                              ACTIVE
+                            </span>
+                          ) : (
+                            <span className="ml-1 text-[9px] font-bold uppercase tracking-wider bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700">
+                              MUTED
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -1376,7 +1470,7 @@ export default function Dashboard() {
               /* DETAILED REVIEW FEED VIEW */
               <div className="space-y-6">
                 {sortedClips.map((clip, index) => {
-                  const channels = selectedChannels[clip.id] || [];
+                  const channels = selectedChannels[clip.id] !== undefined ? selectedChannels[clip.id] : availableChannels.map(ch => ch.id);
                   const tags = editHashtags[clip.id] || [];
 
                   return (
@@ -1524,9 +1618,14 @@ export default function Dashboard() {
 
                             {/* Channel Toggles */}
                             <div className="mb-5">
-                              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                                Target Social Channels
-                              </label>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                                  Target Social Channels
+                                </label>
+                                <span className="text-[11px] text-slate-500 font-medium">
+                                  {channels.length} of {availableChannels.length} active
+                                </span>
+                              </div>
                               <div className="flex flex-wrap gap-2">
                                 {availableChannels.map((ch) => {
                                   const isSelected = channels.includes(ch.id);
@@ -1537,13 +1636,22 @@ export default function Dashboard() {
                                       onClick={() => toggleChannel(clip.id, ch.id)}
                                       className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition ${
                                         isSelected
-                                          ? "bg-purple-600/20 border-purple-500 text-purple-200 shadow-sm shadow-purple-600/20"
-                                          : "bg-[#090d16] border-slate-800/80 text-slate-500 hover:text-slate-300"
+                                          ? "bg-purple-600/25 border-purple-400 text-purple-200 shadow-sm shadow-purple-600/20"
+                                          : "bg-[#090d16] border-slate-800 text-slate-500 hover:text-slate-300 opacity-60 hover:opacity-100"
                                       }`}
                                     >
-                                      <span>{ch.icon}</span>
+                                      <span className="text-sm">{ch.icon}</span>
                                       <span>{ch.platform}</span>
                                       <span className="text-[10px] text-slate-500 font-normal">(@{ch.name})</span>
+                                      {isSelected ? (
+                                        <span className="ml-1 text-[9px] font-black uppercase tracking-wider bg-purple-500/30 text-purple-300 px-1.5 py-0.5 rounded border border-purple-500/40">
+                                          ACTIVE
+                                        </span>
+                                      ) : (
+                                        <span className="ml-1 text-[9px] font-bold uppercase tracking-wider bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700">
+                                          MUTED
+                                        </span>
+                                      )}
                                     </button>
                                   );
                                 })}

@@ -55,9 +55,11 @@ export async function POST(req: Request) {
 
     console.log(`[API /approve] Using public video URL for ${clipId}: ${videoUrl}`);
 
-    const selectedChannels = channelIds && channelIds.length > 0
-      ? channelIds
-      : ["6aff36d6ece6dfde5f223b82", "6aff37d0ece6dfde5f224463", "6aff398dece6dfde5f226a6a"];
+    if (!channelIds || !Array.isArray(channelIds) || channelIds.length === 0) {
+      return NextResponse.json({ error: "Please select at least one target social channel before approving." }, { status: 400 });
+    }
+
+    const selectedChannels = channelIds;
 
     // Format post text
     const tagList = Array.isArray(hashtags) ? hashtags : ["#gta6", "#ishowspeed", "#gaming", "#shorts", "#viral", "#fyp"];
@@ -264,6 +266,7 @@ export async function POST(req: Request) {
       success: true,
       clipId,
       videoUrl,
+      channelsPosted: selectedChannels,
       postResults
     });
   } catch (error: any) {
