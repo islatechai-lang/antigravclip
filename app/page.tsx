@@ -49,6 +49,7 @@ interface ClipItem {
   duration_seconds: number;
   what_happens: string;
   storyboard_path?: string;
+  storyboard_url?: string;
   status: "pending" | "approved" | "posted" | "declined";
   created_at?: string;
   posted_channels?: string[];
@@ -1318,7 +1319,8 @@ export default function Dashboard() {
                       <div className="relative aspect-[9/16] bg-black overflow-hidden flex items-center justify-center">
                         <video
                           src={clip.video_url || `/api/video/${clip.id}`}
-                          preload="metadata"
+                          preload="none"
+                          poster={clip.storyboard_url || `/api/storyboard/${clip.id}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
 
@@ -1401,7 +1403,8 @@ export default function Dashboard() {
                               src={clip.video_url || `/api/video/${clip.id}`}
                               controls
                               playsInline
-                              preload="metadata"
+                              preload="none"
+                              poster={clip.storyboard_url || `/api/storyboard/${clip.id}`}
                               className="w-full h-full object-cover"
                             />
                           </div>

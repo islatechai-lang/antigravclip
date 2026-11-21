@@ -9,7 +9,11 @@ export async function GET(
   try {
     const rawId = params.id;
     const sbDir = path.join(process.cwd(), "output", "storyboards");
-    
+
+    if (!fs.existsSync(sbDir)) {
+      return new NextResponse("Storyboard not found", { status: 404 });
+    }
+
     let target = path.join(sbDir, rawId.endsWith(".jpg") ? rawId : `${rawId}.jpg`);
     if (!fs.existsSync(target)) {
       target = path.join(sbDir, `storyboard_${rawId}.jpg`);

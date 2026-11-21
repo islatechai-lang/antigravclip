@@ -147,6 +147,7 @@ class VideoCompositor:
             "-crf", "20",
             "-c:a", "aac",
             "-b:a", "128k",
+            "-movflags", "+faststart",
             str(output_path)
         ]
 

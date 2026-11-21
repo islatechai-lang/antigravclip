@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { supabase } from "@/lib/supabase";
 
 export async function GET(
   req: NextRequest,
@@ -16,7 +17,19 @@ export async function GET(
     }
 
     if (!fs.existsSync(videoFile)) {
-      return new NextResponse("Video not found", { status: 404 });
+      // Cloud fallback: check Supabase or GitHub releases
+      try {
+        const { data: clipData } = await supabase
+          .from("clips")
+          .select("video_url")
+          .eq("id", clipId)
+          .maybeSingle();
+
+        const targetUrl = clipData?.video_url || `https://github.com/islatechai-lang/antigravclip/releases/download/v1-clips/${clipId}.mp4`;
+        return NextResponse.redirect(targetUrl, 302);
+      } catch {
+        return NextResponse.redirect(`https://github.com/islatechai-lang/antigravclip/releases/download/v1-clips/${clipId}.mp4`, 302);
+      }
     }
 
     const stat = fs.statSync(videoFile);

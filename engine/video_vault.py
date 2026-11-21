@@ -28,6 +28,19 @@ def upload_clip_to_vault(video_path: str) -> Optional[str]:
     }
 
     try:
+        # Ensure faststart moov atom is at beginning before upload for instant web playback
+        try:
+            import subprocess
+            tmp_fast = f"{video_path}.fast.mp4"
+            f_res = subprocess.run(
+                ["ffmpeg", "-y", "-i", video_path, "-c", "copy", "-movflags", "+faststart", tmp_fast],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=30
+            )
+            if f_res.returncode == 0 and os.path.exists(tmp_fast) and os.path.getsize(tmp_fast) > 0:
+                os.replace(tmp_fast, video_path)
+        except Exception:
+            pass
+
         rel_res = requests.get(f"https://api.github.com/repos/{repo}/releases/tags/{tag}", headers=headers, timeout=15)
         if not rel_res.ok:
             return None
