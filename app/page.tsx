@@ -669,7 +669,7 @@ export default function Dashboard() {
                   <span>{activePreviewClip.virality_score.toFixed(1)}/10</span>
                 </div>
                 <video
-                  src={activePreviewClip.video_url || `/api/video/${activePreviewClip.id}`}
+                  src={`/api/video/${activePreviewClip.id}`}
                   controls
                   autoPlay
                   playsInline
@@ -1318,7 +1318,7 @@ export default function Dashboard() {
                       {/* 9:16 Video Thumbnail Container */}
                       <div className="relative aspect-[9/16] bg-black overflow-hidden flex items-center justify-center">
                         <video
-                          src={clip.video_url || `/api/video/${clip.id}`}
+                          src={`/api/video/${clip.id}`}
                           preload="none"
                           poster={clip.storyboard_url || `/api/storyboard/${clip.id}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -1400,7 +1400,7 @@ export default function Dashboard() {
                             </div>
 
                             <video
-                              src={clip.video_url || `/api/video/${clip.id}`}
+                              src={`/api/video/${clip.id}`}
                               controls
                               playsInline
                               preload="none"
