@@ -7,7 +7,7 @@ export async function GET() {
   const fallbackChannels = [
     { id: "6aff36d6ece6dfde5f223b82", name: "antigravclip", service: "tiktok" },
     { id: "6aff37d0ece6dfde5f224463", name: "Chatguru A.I", service: "youtube" },
-    { id: "6aff398dece6dfde5f226a6a", name: "AntigravClips", service: "facebook" },
+    { id: "6b0185a0ece6dfde5f437c60", name: "Factai", service: "facebook" },
   ];
 
   try {

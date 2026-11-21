@@ -93,8 +93,8 @@ export async function POST(req: Request) {
           privacy: "public",
           madeForKids: false
         };
-      } else if (channelId === "6aff398dece6dfde5f226a6a") {
-        // Facebook
+      } else if (channelId === "6b0185a0ece6dfde5f437c60" || channelId === "6aff398dece6dfde5f226a6a") {
+        // Facebook (Factai)
         metaObj.facebook = {
           type: "reel"
         };

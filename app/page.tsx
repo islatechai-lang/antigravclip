@@ -132,11 +132,13 @@ export default function Dashboard() {
   const [newTagInput, setNewTagInput] = useState<Record<string, string>>({});
   const [selectedChannels, setSelectedChannels] = useState<Record<string, string[]>>({});
 
-  const availableChannels = [
+  const DEFAULT_CHANNELS = [
     { id: "6aff36d6ece6dfde5f223b82", name: "antigravclip", platform: "TikTok", icon: "🎵" },
     { id: "6aff37d0ece6dfde5f224463", name: "Chatguru A.I", platform: "YouTube Shorts", icon: "▶️" },
-    { id: "6aff398dece6dfde5f226a6a", name: "AntigravClips", platform: "Facebook Reels", icon: "📘" }
+    { id: "6b0185a0ece6dfde5f437c60", name: "Factai", platform: "Facebook Reels", icon: "📘" }
   ];
+
+  const [availableChannels, setAvailableChannels] = useState(DEFAULT_CHANNELS);
 
   const logAction = async (message: string, level: "info" | "success" | "warning" | "error" = "info", source: string = "UI") => {
     try {
@@ -223,7 +225,9 @@ export default function Dashboard() {
           const saved = localStorage.getItem("antigrav_default_channels");
           if (saved) {
             const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) defaultChans = parsed;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              defaultChans = parsed.map((id: string) => id === "6aff398dece6dfde5f226a6a" ? "6b0185a0ece6dfde5f437c60" : id);
+            }
           }
         } catch {}
 
@@ -245,6 +249,11 @@ export default function Dashboard() {
 
         setSelectedChannels(prev => {
           const next = { ...prev };
+          Object.keys(next).forEach(cid => {
+            if (next[cid].includes("6aff398dece6dfde5f226a6a")) {
+              next[cid] = next[cid].map(id => id === "6aff398dece6dfde5f226a6a" ? "6b0185a0ece6dfde5f437c60" : id);
+            }
+          });
           (data.clips || []).forEach((c: ClipItem) => {
             if (next[c.id] === undefined) next[c.id] = defaultChans;
           });
@@ -350,7 +359,29 @@ export default function Dashboard() {
     }
   };
 
+  const fetchChannels = async () => {
+    try {
+      const res = await fetch("/api/channels");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.channels) && data.channels.length > 0) {
+          const mapped = data.channels.map((ch: any) => {
+            let icon = "🌐";
+            let platform = "Social";
+            if (ch.service === "tiktok") { icon = "🎵"; platform = "TikTok"; }
+            else if (ch.service === "youtube") { icon = "▶️"; platform = "YouTube Shorts"; }
+            else if (ch.service === "facebook") { icon = "📘"; platform = "Facebook Reels"; }
+            else if (ch.service === "instagram") { icon = "📸"; platform = "Instagram Reels"; }
+            return { id: ch.id, name: ch.name, platform, icon };
+          });
+          setAvailableChannels(mapped);
+        }
+      }
+    } catch {}
+  };
+
   useEffect(() => {
+    fetchChannels();
     fetchClips();
     fetchWorkerStatus();
     fetchLogs();

@@ -1,5 +1,32 @@
 [
   {
+    "id": "clip_lacy_1795261807",
+    "file": "clip_lacy_1795261807.mp4",
+    "video_path": "output\\clip_lacy_1795261807.mp4",
+    "channel": "lacy",
+    "hook_title": "Can she handle the pressure?\ud83d\ude05",
+    "caption": "Lacy's got a plan, but can she keep it together? #Gaming #FunnyMoments #StreamerLife",
+    "hashtags": [
+      "#gta6",
+      "#ishowspeed",
+      "#gaming",
+      "#shorts",
+      "#viral",
+      "#fyp"
+    ],
+    "virality_score": 8.5,
+    "reasoning": "The clip features high-energy reactions, multi-speaker banter, and a strong moment of interaction with chat. The dialogue showcases humor and emotional responses, making it engaging for viewers.",
+    "duration_seconds": 14.0,
+    "what_happens": "Streamer engagement verified via facecam activity tracking.",
+    "storyboard_path": "output\\storyboards\\storyboard_slice_1795261767.jpg",
+    "status": "pending",
+    "created_at": "2026-11-21 19:50:29",
+    "posted_channels": [],
+    "buffer_post_ids": {},
+    "video_url": "https://github.com/islatechai-lang/antigravclip/releases/download/v1-clips/clip_lacy_1795261807.mp4",
+    "synced_to_supabase": true
+  },
+  {
     "id": "clip_kaicenat_1795248142",
     "file": "clip_kaicenat_1795248142.mp4",
     "video_path": "output\\clip_kaicenat_1795248142.mp4",
@@ -23,7 +50,8 @@
     "created_at": "2026-11-21 16:03:30",
     "posted_channels": [],
     "buffer_post_ids": {},
-    "video_url": "https://github.com/islatechai-lang/antigravclip/releases/download/v1-clips/clip_kaicenat_1795248142.mp4"
+    "video_url": "https://github.com/islatechai-lang/antigravclip/releases/download/v1-clips/clip_kaicenat_1795248142.mp4",
+    "synced_to_supabase": true
   },
   {
     "id": "clip_kaicenat_1795247945",
